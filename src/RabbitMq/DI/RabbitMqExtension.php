@@ -393,25 +393,17 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 
 
 
+	/**
+	 * @param mixed $callback
+	 * @return mixed
+	 */
 	protected static function fixCallback($callback)
 	{
-		list($callback) = self::filterArgs($callback);
-		if ($callback instanceof Nette\DI\Statement && substr_count($callback->entity, '::') && empty($callback->arguments)) {
-			$callback = explode('::', $callback->entity, 2);
+		if (is_string($callback) && substr_count($callback, '::')) {
+			$callback = explode('::', $callback, 2);
 		}
 
 		return $callback;
-	}
-
-
-
-	/**
-	 * @param string|\stdClass $statement
-	 * @return Nette\DI\Statement[]
-	 */
-	protected static function filterArgs($statement)
-	{
-		return Nette\DI\Compiler::filterArguments([is_string($statement) ? new Nette\DI\Statement($statement) : $statement]);
 	}
 
 }
