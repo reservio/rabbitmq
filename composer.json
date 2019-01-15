@@ -42,11 +42,11 @@
 		"issues": "https://github.com/damejidlo/rabbitmq/issues"
 	},
 	"autoload": {
-		"psr-0": {
-			"Damejidlo\\RabbitMq\\": "src/"
+		"psr-4": {
+			"Damejidlo\\RabbitMq\\": "src/RabbitMq/"
 		},
 		"classmap": [
-			"src/Damejidlo/RabbitMq/exceptions.php"
+			"src/RabbitMq/exceptions.php"
 		]
 	},
 	"extra": {
