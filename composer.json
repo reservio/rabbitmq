@@ -13,6 +13,11 @@
 			"name": "Filip Procházka",
 			"homepage": "http://filip-prochazka.com",
 			"email": "filip@prochazka.su"
+		},
+		{
+			"name": "Dáme jídlo developers",
+			"homepage": "https://www.damejidlo.cz",
+			"email": "webmaster@damejidlo.cz"
 		}
 	],
 	"require": {
