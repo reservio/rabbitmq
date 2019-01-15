@@ -55,6 +55,10 @@ abstract class BaseConsumer extends AmqpMember
 
 
 
+	abstract public function consume(int $messageAmount) : void;
+
+
+
 	public function setCallback(callable $callback) : void
 	{
 		$this->callback = $callback;
