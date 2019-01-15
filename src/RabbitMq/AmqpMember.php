@@ -23,7 +23,7 @@ abstract class AmqpMember
 	protected $conn;
 
 	/**
-	 * @var Channel
+	 * @var AMQPChannel
 	 */
 	protected $ch;
 

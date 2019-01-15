@@ -1,62 +1,62 @@
 <?php
+declare(strict_types = 1);
 
 namespace Damejidlo\RabbitMq;
 
-use Damejidlo;
-use Nette;
-use PhpAmqpLib;
+use Nette\DI\Container;
+use PhpAmqpLib\Connection\AMQPLazyConnection;
 
 
 
-class Connection extends PhpAmqpLib\Connection\AMQPLazyConnection implements IConnection
+class Connection extends AMQPLazyConnection
 {
 
 	/**
-	 * @var Nette\DI\Container
+	 * @var Container
 	 */
 	private $serviceLocator;
 
 	/**
-	 * @var array
+	 * @var string[][]
 	 */
 	private $serviceMap = [];
 
 
 
-	/**
-	 * @param string $name
-	 * @return BaseConsumer
-	 */
-	public function getConsumer($name)
+	public function getConsumer(string $name) : BaseConsumer
 	{
 		if (!isset($this->serviceMap['consumer'][$name])) {
 			throw new \InvalidArgumentException("Unknown consumer {$name}");
 		}
 
-		return $this->serviceLocator->getService($this->serviceMap['consumer'][$name]);
+		/** @var BaseConsumer $consumer */
+		$consumer = $this->serviceLocator->getService($this->serviceMap['consumer'][$name]);
+
+		return $consumer;
 	}
 
 
 
-	/**
-	 * @param $name
-	 * @return Producer
-	 */
-	public function getProducer($name)
+	public function getProducer(string $name) : IProducer
 	{
 		if (!isset($this->serviceMap['producer'][$name])) {
 			throw new \InvalidArgumentException("Unknown producer {$name}");
 		}
 
-		return $this->serviceLocator->getService($this->serviceMap['producer'][$name]);
+		/** @var IProducer $producer */
+		$producer = $this->serviceLocator->getService($this->serviceMap['producer'][$name]);
+
+		return $producer;
 	}
 
 
 
 	/**
 	 * @internal
+	 * @param string[] $producers
+	 * @param string[] $consumers
 	 */
-	public function injectServiceMap(array $producers, array $consumers)
+	public function injectServiceMap(array $producers, array $consumers) : void
 	{
 		$this->serviceMap = [
 			'consumer' => $consumers,
@@ -68,41 +68,11 @@ class Connection extends PhpAmqpLib\Connection\AMQPLazyConnection implements ICo
 
 	/**
 	 * @internal
-	 * @param Nette\DI\Container $sl
+	 * @param Container $serviceLocator
 	 */
-	public function injectServiceLocator(Nette\DI\Container $sl)
+	public function injectServiceLocator(Container $serviceLocator) : void
 	{
-		$this->serviceLocator = $sl;
-	}
-
-
-
-	/**
-	 * Fetch a Channel object identified by the numeric channel_id, or
-	 * create that object if it doesn't already exist.
-	 *
-	 * @param string $id
-	 * @return Channel
-	 */
-	public function channel($id = null)
-	{
-		if (isset($this->channels[$id])) {
-			return $this->channels[$id];
-		}
-
-		$this->connect();
-		$id = $id ? $id : $this->get_free_channel_id();
-
-		return $this->channels[$id] = $this->doCreateChannel($id);
-	}
-
-
-
-	protected function doCreateChannel(string $id) : Channel
-	{
-		$channel = new Channel($this->connection, $id);
-
-		return $channel;
+		$this->serviceLocator = $serviceLocator;
 	}
 
 }

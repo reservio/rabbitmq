@@ -3,12 +3,12 @@ declare(strict_types = 1);
 
 namespace DamejidloTests\RabbitMq;
 
-use Damejidlo\RabbitMq\Channel;
 use Damejidlo\RabbitMq\Connection;
 use Damejidlo\RabbitMq\Consumer;
 use Damejidlo\RabbitMq\IConsumer;
 use DamejidloTests\DjTestCase;
 use Mockery\MockInterface;
+use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 use Tester\Assert;
 
@@ -96,11 +96,11 @@ class ConsumerTest extends DjTestCase
 
 
 	/**
-	 * @return Channel|MockInterface
+	 * @return AMQPChannel|MockInterface
 	 */
-	private function mockChannel() : Channel
+	private function mockChannel() : AMQPChannel
 	{
-		$mock = \Mockery::mock(Channel::class);
+		$mock = \Mockery::mock(AMQPChannel::class);
 		$mock->makePartial();
 
 		return $mock;
