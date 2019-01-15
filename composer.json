@@ -1,5 +1,5 @@
 {
-	"name": "kdyby/rabbitmq",
+	"name": "damejidlo/rabbitmq",
 	"type": "library",
 	"description": "Integrates php-amqplib with RabbitMq and Nette Framework",
 	"keywords": ["nette", "kdyby", "rabbitmq", "rabbit", "bunny", "amqp", "messaging", "message", "queue"],
@@ -50,15 +50,14 @@
 		"kdyby/console": "~2.5@dev"
 	},
 	"support": {
-		"email": "filip@prochazka.su",
-		"issues": "https://github.com/Kdyby/RabbitMq/issues"
+		"issues": "https://github.com/damejidlo/rabbitmq/issues"
 	},
 	"autoload": {
 		"psr-0": {
-			"Kdyby\\RabbitMq\\": "src/"
+			"Damejidlo\\RabbitMq\\": "src/"
 		},
 		"classmap": [
-			"src/Kdyby/RabbitMq/exceptions.php"
+			"src/Damejidlo/RabbitMq/exceptions.php"
 		]
 	},
 	"extra": {

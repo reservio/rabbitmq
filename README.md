@@ -1,4 +1,4 @@
-Kdyby/RabbitMq
+Damejidlo/RabbitMq
 ======
 
 [![Build Status](https://travis-ci.org/Kdyby/RabbitMq.svg?branch=master)](https://travis-ci.org/Kdyby/RabbitMq)
@@ -13,7 +13,7 @@ This is a fork of [videlalvaro/RabbitMqBundle](https://github.com/videlalvaro/Ra
 Requirements
 ------------
 
-Kdyby/RabbitMq requires PHP 5.4 or higher.
+Damejidlo/RabbitMq requires PHP 5.4 or higher.
 
 - [Nette Framework](https://github.com/nette/nette)
 - [php-amqplib](https://github.com/videlalvaro/php-amqplib)
@@ -22,19 +22,19 @@ Kdyby/RabbitMq requires PHP 5.4 or higher.
 Installation
 ------------
 
-The best way to install Kdyby/RabbitMq is using  [Composer](http://getcomposer.org/):
+The best way to install Damejidlo/RabbitMq is using  [Composer](http://getcomposer.org/):
 
 ```sh
-$ composer require kdyby/rabbitmq
+$ composer require damejidlo/rabbitmq
 ```
 
 
 Documentation
 ------------
 
-Learn more in the [documentation](https://github.com/Kdyby/RabbitMq/blob/master/docs/en/index.md).
+Learn more in the [documentation](https://github.com/damejidlo/rabbitmq/blob/master/docs/en/index.md).
 
 
 -----
 
-Homepage [http://www.kdyby.org](http://www.kdyby.org) and repository [http://github.com/Kdyby/RabbitMq](http://github.com/Kdyby/RabbitMq).
+Homepage [http://www.kdyby.org](http://www.kdyby.org) and repository [http://github.com/Damejidlo/RabbitMq](http://github.com/Damejidlo/RabbitMq).

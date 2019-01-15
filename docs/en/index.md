@@ -6,7 +6,7 @@ This library incorporates messaging in your application via [RabbitMQ](http://ww
 ## Installation
 
 
-The best way to install Kdyby/RabbitMq is using [Composer](http://getcomposer.org/):
+The best way to install Damejidlo/RabbitMq is using [Composer](http://getcomposer.org/):
 
 ```sh
 $ composer require kdyby/rabbitmq
@@ -16,7 +16,7 @@ Now you have to enable the extension using your neon config
 
 ```yml
 extensions:
-	rabbitmq: Kdyby\RabbitMq\DI\RabbitMqExtension
+	rabbitmq: Damejidlo\RabbitMq\DI\RabbitMqExtension
 ```
 
 And done!
@@ -134,7 +134,7 @@ then in the service container you will have a service called `rabbitmq.producer.
 But because it's better to use autowiring, you should use the `Connection` service to get the producer.
 
 ```php
-/** @var \Kdyby\RabbitMq\Connection @inject */
+/** @var \Damejidlo\RabbitMq\Connection @inject */
 public $bunny;
 
 public function actionDefault()
@@ -143,7 +143,7 @@ public function actionDefault()
 }
 ```
 
-Besides the message itself, the `Kdyby\RabbitMq\Producer::publish()` method also accepts an optional routing key parameter and an optional array of additional properties.
+Besides the message itself, the `Damejidlo\RabbitMq\Producer::publish()` method also accepts an optional routing key parameter and an optional array of additional properties.
 The array of additional properties allows you to alter the properties with which an `PhpAmqpLib\Message\AMQPMessage` object gets constructed by default.
 This way, for example, you can change the application headers.
 
@@ -175,7 +175,7 @@ You can also configure these in the config
 	...
 ```
 
-If you need to use a custom class for a producer (which should inherit from `Kdyby\RabbitMq\Producer`), you can use the `class` option:
+If you need to use a custom class for a producer (which should inherit from `Damejidlo\RabbitMq\Producer`), you can use the `class` option:
 
 ```yaml
 	...
@@ -226,7 +226,7 @@ Now, how to run a consumer? There's a command for it that can be executed like t
 $ php www/index.php rabbitmq:consumer -m 50 uploadPicture
 ```
 
-What does this mean? First of all, we've used [Kdyby/Console](https://github.com/Kdyby/Console/blob/master/docs/en/index.md) here, so have a look at it and then come back.
+What does this mean? First of all, we've used [Damejidlo/Console](https://github.com/Damejidlo/Console/blob/master/docs/en/index.md) here, so have a look at it and then come back.
 We are executing the `uploadPicture` consumer telling it to consume only 50 messages.
 Every time the consumer receives a message from the server, it will execute the configured callback passing the AMQP message as an instance of the `PhpAmqpLib\Message\AMQPMessage` class.
 The message body can be obtained by calling `$msg->body`. By default the consumer will process messages in an **endless loop** for some definition of _endless_.
@@ -306,7 +306,7 @@ Here's an example callback:
 
 namespace Acme\Consumer;
 
-use Kdyby\RabbitMq\IConsumer;
+use Damejidlo\RabbitMq\IConsumer;
 use PhpAmqpLib\Message\AMQPMessage;
 
 class UploadPictureConsumer implements IConsumer
@@ -383,7 +383,7 @@ $ php www/index.php rabbitmq:rpc-server randomInt
 And then add the following code to our presenter:
 
 ```php
-/** @var \Kdyby\RabbitMq\Connection @inject */
+/** @var \Damejidlo\RabbitMq\Connection @inject */
 public $bunny;
 
 public function actionDefault()
@@ -446,7 +446,7 @@ As you can guess, we can also make `parallel RPC calls`.
 
 Let's say that for rendering some webpage, you need to perform two database queries, one taking 5 seconds to complete and the other one taking 2 seconds –very expensive queries–.
 If you execute them sequentially, then your page will be ready to deliver in about 7 seconds. If you run them in parallel then you will have your page served in about 5 seconds.
-With Kdyby/RabbitMq we can do such parallel calls with ease. Let's define a parallel client in the config and another RPC server:
+With Damejidlo/RabbitMq we can do such parallel calls with ease. Let's define a parallel client in the config and another RPC server:
 
 ```yaml
 	...
