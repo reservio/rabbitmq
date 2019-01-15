@@ -33,7 +33,7 @@ class Connection extends PhpAmqpLib\Connection\AMQPLazyConnection implements ICo
 	public function getConsumer($name)
 	{
 		if (!isset($this->serviceMap['consumer'][$name])) {
-			throw new InvalidArgumentException("Unknown consumer {$name}");
+			throw new \InvalidArgumentException("Unknown consumer {$name}");
 		}
 
 		return $this->serviceLocator->getService($this->serviceMap['consumer'][$name]);
@@ -48,7 +48,7 @@ class Connection extends PhpAmqpLib\Connection\AMQPLazyConnection implements ICo
 	public function getProducer($name)
 	{
 		if (!isset($this->serviceMap['producer'][$name])) {
-			throw new InvalidArgumentException("Unknown producer {$name}");
+			throw new \InvalidArgumentException("Unknown producer {$name}");
 		}
 
 		return $this->serviceLocator->getService($this->serviceMap['producer'][$name]);

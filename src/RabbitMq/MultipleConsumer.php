@@ -38,7 +38,7 @@ class MultipleConsumer extends Consumer
 		$this->queues = [];
 		foreach ($queues as $name => $queue) {
 			if (!isset($queue['callback'])) {
-				throw new InvalidArgumentException("The queue '$name' is missing a callback.");
+				throw new \InvalidArgumentException("The queue '$name' is missing a callback.");
 			}
 
 			Callback::check($queue['callback']);

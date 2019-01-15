@@ -1,52 +1,26 @@
 <?php
+declare(strict_types = 1);
 
 namespace Damejidlo\RabbitMq;
 
-
-/**
- * Common interface for caching github exceptions
- *
- * @author Filip Procházka <filip@prochazka.com>
- */
-interface Exception
+class QueueNotFoundException extends \RuntimeException
 {
 
 }
 
 
 
-/**
- * @author Filip Procházka <filip@prochazka.com>
- */
-class InvalidArgumentException extends \InvalidArgumentException implements Exception
+class TerminateException extends \RuntimeException
 {
 
-}
-
-
-
-/**
- * @author Alvaro Videla <videlalvaro@gmail.com>
- */
-class QueueNotFoundException extends \RuntimeException implements Exception
-{
-
-}
-
-
-
-class TerminateException extends \RuntimeException implements Exception
-{
-
+	/**
+	 * @var int
+	 */
 	private $response = IConsumer::MSG_REJECT_REQUEUE;
 
 
 
-	/**
-	 * @param int $response
-	 * @return TerminateException
-	 */
-	public static function withResponse($response)
+	public static function withResponse(int $response) : self
 	{
 		$e = new self();
 		$e->response = $response;
@@ -55,10 +29,7 @@ class TerminateException extends \RuntimeException implements Exception
 
 
 
-	/**
-	 * @return int
-	 */
-	public function getResponse()
+	public function getResponse() : int
 	{
 		return $this->response;
 	}
