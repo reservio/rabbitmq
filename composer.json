@@ -27,7 +27,7 @@
 	},
 	"require-dev": {
 		"nette/bootstrap": "^2.4",
-		"kdyby/console": "^2.5",
+		"kdyby/console": "^2.7.1",
 
 		"damejidlo/coding-standard": "^0.10.0",
 		"jakub-onderka/php-parallel-lint": "^1.0",
