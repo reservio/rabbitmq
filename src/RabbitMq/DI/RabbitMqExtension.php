@@ -8,7 +8,6 @@ use Damejidlo\RabbitMq\Command\PurgeConsumerCommand;
 use Damejidlo\RabbitMq\Command\SetupFabricCommand;
 use Damejidlo\RabbitMq\Connection;
 use Damejidlo\RabbitMq\Consumer;
-use Damejidlo\RabbitMq\Diagnostics\Panel;
 use Damejidlo\RabbitMq\IProducer;
 use Damejidlo\RabbitMq\MultipleConsumer;
 use Damejidlo\RabbitMq\Producer;
@@ -38,7 +37,6 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 		'connection' => [],
 		'producers' => [],
 		'consumers' => [],
-		'debugger' => TRUE,
 		'autoSetupFabric' => NULL, // depends on debugMode parameter
 	];
 
@@ -131,16 +129,10 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 	 */
 	private $producersConfig = [];
 
-	/**
-	 * @var bool
-	 */
-	private $debugMode;
-
 
 
 	public function __construct(bool $debugMode = FALSE)
 	{
-		$this->debugMode = $debugMode;
 		$this->defaults['autoSetupFabric'] = $this->defaults['autoSetupFabric'] ?? $debugMode;
 	}
 
@@ -170,17 +162,6 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 		$builder = $this->getContainerBuilder();
 		foreach ($this->connectionsMeta as $name => $meta) {
 			$connection = $builder->getDefinition($meta['serviceId']);
-
-			if ($this->debugMode && $this->config['debugger']) {
-				$panelService = $meta['serviceId'] . '.panel';
-				$builder->addDefinition($panelService)
-					->setClass(Panel::class)
-					->addSetup('injectServiceMap', [$meta['consumers']])
-					->setInject(FALSE)
-					->setAutowired(FALSE);
-				$connection->addSetup('injectPanel', ['@' . $panelService]);
-			}
-
 			$connection->addSetup('injectServiceLocator');
 			$connection->addSetup('injectServiceMap', [$meta['producers'], $meta['consumers']]);
 		}

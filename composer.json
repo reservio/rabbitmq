@@ -27,7 +27,6 @@
 	},
 	"require-dev": {
 		"nette/bootstrap": "^2.4",
-		"tracy/tracy": "^2.4",
 		"kdyby/console": "^2.5",
 
 		"damejidlo/coding-standard": "^0.10.0",

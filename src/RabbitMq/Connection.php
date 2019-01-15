@@ -20,11 +20,6 @@ class Connection extends PhpAmqpLib\Connection\AMQPLazyConnection implements ICo
 	private $serviceLocator;
 
 	/**
-	 * @var Diagnostics\Panel
-	 */
-	private $panel;
-
-	/**
 	 * @var array
 	 */
 	private $serviceMap = [];
@@ -86,17 +81,6 @@ class Connection extends PhpAmqpLib\Connection\AMQPLazyConnection implements ICo
 
 
 	/**
-	 * @internal
-	 * @param Diagnostics\Panel $panel
-	 */
-	public function injectPanel(Diagnostics\Panel $panel)
-	{
-		$this->panel = $panel->register($this);
-	}
-
-
-
-	/**
 	 * Fetch a Channel object identified by the numeric channel_id, or
 	 * create that object if it doesn't already exist.
 	 *
@@ -117,17 +101,9 @@ class Connection extends PhpAmqpLib\Connection\AMQPLazyConnection implements ICo
 
 
 
-	/**
-	 * @param string $id
-	 * @return Channel
-	 */
-	protected function doCreateChannel($id)
+	protected function doCreateChannel(string $id) : Channel
 	{
 		$channel = new Channel($this->connection, $id);
-
-		if ($this->panel) {
-			$channel->injectPanel($this->panel);
-		}
 
 		return $channel;
 	}

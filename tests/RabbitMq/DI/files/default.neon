@@ -3,8 +3,6 @@ extensions:
 
 
 rabbitmq:
-	debugger: false
-
 	connection:
 		foo_connection:
 			host: 127.0.0.1
