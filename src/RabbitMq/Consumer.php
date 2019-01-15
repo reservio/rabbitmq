@@ -13,7 +13,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 /**
  * @method void onStart(Consumer $self)
  * @method void onConsume(Consumer $self, AMQPMessage $msg)
- * @method void onReject(Consumer $self, AMQPMessage $msg, $processFlag)
+ * @method void onReject(Consumer $self, AMQPMessage $msg, int $processFlag)
  * @method void onAck(Consumer $self, AMQPMessage $msg)
  * @method void onError(Consumer $self, AMQPExceptionInterface $exception)
  * @method void onTimeout(Consumer $self)
@@ -158,9 +158,19 @@ class Consumer extends BaseConsumer
 
 
 
-	protected function handleProcessMessage(AMQPMessage $message, ?int $processFlag) : void
+	protected function handleProcessMessage(AMQPMessage $message, int $processFlag) : void
 	{
-		if ($processFlag === IConsumer::MSG_REJECT_REQUEUE) {
+		if ($processFlag === IConsumer::MSG_ACK) {
+			// Remove message from queue
+			$message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
+			$this->onAck($this, $message);
+
+		} elseif ($processFlag === IConsumer::MSG_REJECT) {
+			// Reject and drop
+			$message->delivery_info['channel']->basic_reject($message->delivery_info['delivery_tag'], FALSE);
+			$this->onReject($this, $message, $processFlag);
+
+		} elseif ($processFlag === IConsumer::MSG_REJECT_REQUEUE) {
 			// Reject and requeue message to RabbitMQ
 			$message->delivery_info['channel']->basic_reject($message->delivery_info['delivery_tag'], TRUE);
 			$this->onReject($this, $message, $processFlag);
@@ -170,15 +180,8 @@ class Consumer extends BaseConsumer
 			$message->delivery_info['channel']->basic_nack($message->delivery_info['delivery_tag'], FALSE, TRUE);
 			$this->onReject($this, $message, $processFlag);
 
-		} elseif ($processFlag === IConsumer::MSG_REJECT) {
-			// Reject and drop
-			$message->delivery_info['channel']->basic_reject($message->delivery_info['delivery_tag'], FALSE);
-			$this->onReject($this, $message, $processFlag);
-
 		} else {
-			// Remove message from queue only if callback return not FALSE
-			$message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
-			$this->onAck($this, $message);
+			throw new \InvalidArgumentException("Invalid response flag '$processFlag'.");
 		}
 
 		$this->consumed++;

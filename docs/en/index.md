@@ -207,7 +207,7 @@ Let's review the consumer configuration from above:
 As we see there, the `callback` option has a reference to a service of type `MyApp\UploadPictureService`.
 When the consumer gets a message from the server it will execute the callback.
 If for testing or debugging purposes you need to specify a different callback, then you can change it there.
-Also, the callback service should implement the marker interface `IConsumer` (it's optional).
+The callback service must return a valid response flag (see the constants on `IConsumer`) and should implement the marker interface `IConsumer` (it's optional).
 
 The remaining options are the `exchange` and the `queue`.
 The `exchange` options should be the same ones as those used for the `producer`.

@@ -26,11 +26,11 @@ class MultipleConsumerTest extends DjTestCase
 	 * Check if the message is requeued or not correctly.
 	 *
 	 * @dataProvider processMessageProvider
-	 * @param int|NULL $processFlag
+	 * @param int $processFlag
 	 * @param string $expectedMethod
 	 * @param bool|NULL $expectedRequeue
 	 */
-	public function testProcessMessage(?int $processFlag, string $expectedMethod, ?bool $expectedRequeue = NULL) : void
+	public function testProcessMessage(int $processFlag, string $expectedMethod, ?bool $expectedRequeue = NULL) : void
 	{
 		$connection = $this->mockConnection();
 		$channel = $this->mockChannel();
@@ -38,7 +38,7 @@ class MultipleConsumerTest extends DjTestCase
 		$consumer = new MultipleConsumer($connection);
 		$consumer->setChannel($channel);
 
-		$callback = function ($msg) use ($processFlag) {
+		$callback = function () use ($processFlag) : int {
 			return $processFlag;
 		};
 		$consumer->setQueues(['test-1' => ['callback' => $callback], 'test-2' => ['callback' => $callback]]);
@@ -54,6 +54,12 @@ class MultipleConsumerTest extends DjTestCase
 				Assert::same($requeue, $expectedRequeue); // Check if the message should be requeued.
 			});
 
+		$channel->shouldReceive('basic_nack')
+			->andReturnUsing(function ($delivery_tag, $multiple, $requeue) use ($expectedMethod, $expectedRequeue) : void {
+				Assert::same($expectedMethod, 'basic_nack'); // Check if this function should be called.
+				Assert::same($requeue, $expectedRequeue); // Check if the message should be requeued.
+			});
+
 		$channel->shouldReceive('basic_ack')
 			->andReturnUsing(function ($delivery_tag) use ($expectedMethod) : void {
 				Assert::same($expectedMethod, 'basic_ack'); // Check if this function should be called.
@@ -65,16 +71,45 @@ class MultipleConsumerTest extends DjTestCase
 
 
 
+	public function testInvalidResponse() : void
+	{
+		$connection = $this->mockConnection();
+		$channel = $this->mockChannel();
+
+		$consumer = new MultipleConsumer($connection);
+		$consumer->setChannel($channel);
+
+		$callbackFunction = function () : ?int {
+			return 666;
+		};
+		$consumer->setCallback($callbackFunction);
+
+		// Create a default message
+		$message = new AMQPMessage('foo body');
+		$message->delivery_info['channel'] = $channel;
+		$message->delivery_info['delivery_tag'] = 0;
+
+		Assert::exception(
+			function () use ($consumer, $message) : void {
+				$consumer->processMessage($message);
+			},
+			\InvalidArgumentException::class,
+			"Invalid response flag '666'."
+		);
+	}
+
+
+
 	/**
 	 * @return mixed[]
 	 */
 	public function processMessageProvider() : array
 	{
 		return [
-			[NULL, 'basic_ack'], // Remove message from queue only if callback return not false
-			[IConsumer::MSG_ACK, 'basic_ack'], // Remove message from queue only if callback return not false
-			[IConsumer::MSG_REJECT_REQUEUE, 'basic_reject', TRUE], // Reject and requeue message to RabbitMQ
-			[IConsumer::MSG_REJECT, 'basic_reject', FALSE], // Reject and drop
+			[IConsumer::MSG_ACK, 'basic_ack'],
+			[IConsumer::MSG_REJECT_REQUEUE, 'basic_reject', TRUE],
+			[IConsumer::MSG_REJECT, 'basic_reject', FALSE],
+			[IConsumer::MSG_SINGLE_NACK_REQUEUE, 'basic_nack', TRUE],
 		];
 	}
 
