@@ -2,9 +2,8 @@
 	"name": "damejidlo/rabbitmq",
 	"type": "library",
 	"description": "Integrates php-amqplib with RabbitMq and Nette Framework",
-	"keywords": ["nette", "kdyby", "rabbitmq", "rabbit", "bunny", "amqp", "messaging", "message", "queue"],
-	"homepage": "http://kdyby.org",
-	"license": ["MIT"],
+	"keywords": ["nette", "rabbitmq", "rabbit", "amqp", "messaging", "message", "queue"],
+	"license": "MIT",
 	"authors": [
 		{
 			"name": "Alvaro Videla"
@@ -24,7 +23,6 @@
 		"php": ">=5.4",
 		"nette/di": "~2.4@dev",
 		"nette/utils": "~2.4@dev",
-
 		"php-amqplib/php-amqplib": "~2.6.2"
 	},
 	"require-dev": {
