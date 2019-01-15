@@ -22,7 +22,7 @@
 	"require": {
 		"php": ">=7.1",
 		"nette/di": "^2.4",
-		"nette/utils": "^2.4",
+		"nette/utils": "^2.4.5",
 		"php-amqplib/php-amqplib": "~2.6.2"
 	},
 	"require-dev": {
