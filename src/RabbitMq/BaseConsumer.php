@@ -1,19 +1,16 @@
 <?php
+declare(strict_types = 1);
 
 namespace Damejidlo\RabbitMq;
 
-use Nette\Utils\Callback;
-
-
-
 /**
- * @method onStop(BaseConsumer $self)
+ * @method void onStop(BaseConsumer $self)
  */
 abstract class BaseConsumer extends AmqpMember
 {
 
 	/**
-	 * @var array
+	 * @var callable[]
 	 */
 	public $onStop = [];
 
@@ -33,7 +30,7 @@ abstract class BaseConsumer extends AmqpMember
 	protected $callback;
 
 	/**
-	 * @var int
+	 * @var bool
 	 */
 	protected $forceStop = FALSE;
 
@@ -43,12 +40,12 @@ abstract class BaseConsumer extends AmqpMember
 	protected $idleTimeout = 0;
 
 	/**
-	 * @var array
+	 * @var mixed[]
 	 */
 	protected $qosOptions = [
 		'prefetchSize' => 0,
 		'prefetchCount' => 0,
-		'global' => FALSE
+		'global' => FALSE,
 	];
 
 	/**
@@ -58,15 +55,53 @@ abstract class BaseConsumer extends AmqpMember
 
 
 
-	public function setCallback($callback)
+	public function setCallback(callable $callback) : void
 	{
-		Callback::check($callback);
 		$this->callback = $callback;
 	}
 
 
 
-	public function stopConsuming()
+	public function setConsumerTag(string $tag) : void
+	{
+		$this->consumerTag = $tag;
+	}
+
+
+
+	public function getConsumerTag() : string
+	{
+		return $this->consumerTag;
+	}
+
+
+
+	public function setQosOptions(int $prefetchSize = 0, int $prefetchCount = 0, bool $global = FALSE) : void
+	{
+		$this->qosOptions = [
+			'prefetchSize' => $prefetchSize,
+			'prefetchCount' => $prefetchCount,
+			'global' => $global,
+		];
+	}
+
+
+
+	public function setIdleTimeout(int $seconds) : void
+	{
+		$this->idleTimeout = $seconds;
+	}
+
+
+
+	public function getIdleTimeout() : int
+	{
+		return $this->idleTimeout;
+	}
+
+
+
+	public function stopConsuming() : void
 	{
 		$this->getChannel()->basic_cancel($this->getConsumerTag());
 		$this->onStop($this);
@@ -74,13 +109,20 @@ abstract class BaseConsumer extends AmqpMember
 
 
 
-	protected function setupConsumer()
+	public function forceStopConsumer() : void
+	{
+		$this->forceStop = TRUE;
+	}
+
+
+
+	protected function setupConsumer() : void
 	{
 		if ($this->autoSetupFabric) {
 			$this->setupFabric();
 		}
 
-		if ( ! $this->qosDeclared) {
+		if (!$this->qosDeclared) {
 			$this->qosDeclare();
 		}
 
@@ -97,9 +139,9 @@ abstract class BaseConsumer extends AmqpMember
 
 
 
-	protected function maybeStopConsumer()
+	protected function maybeStopConsumer() : void
 	{
-		if (extension_loaded('pcntl') && (defined('AMQP_WITHOUT_SIGNALS') ? !AMQP_WITHOUT_SIGNALS : true)) {
+		if (extension_loaded('pcntl') && (defined('AMQP_WITHOUT_SIGNALS') ? !AMQP_WITHOUT_SIGNALS : TRUE)) {
 			if (!function_exists('pcntl_signal_dispatch')) {
 				throw new \BadFunctionCallException("Function 'pcntl_signal_dispatch' is referenced in the php.ini 'disable_functions' and can't be called.");
 			}
@@ -109,55 +151,12 @@ abstract class BaseConsumer extends AmqpMember
 
 		if ($this->forceStop || ($this->consumed == $this->target && $this->target > 0)) {
 			$this->stopConsuming();
-
-		} else {
-			return;
 		}
 	}
 
 
 
-	public function setConsumerTag($tag)
-	{
-		$this->consumerTag = $tag;
-	}
-
-
-
-	public function getConsumerTag()
-	{
-		return $this->consumerTag;
-	}
-
-
-
-	public function forceStopConsumer()
-	{
-		$this->forceStop = TRUE;
-	}
-
-
-
-	/**
-	 * Sets the qos settings for the current channel
-	 * Consider that prefetchSize and global do not work with rabbitMQ version <= 8.0
-	 *
-	 * @param int $prefetchSize
-	 * @param int $prefetchCount
-	 * @param bool $global
-	 */
-	public function setQosOptions($prefetchSize = 0, $prefetchCount = 0, $global = FALSE)
-	{
-		$this->qosOptions = [
-			'prefetchSize' => $prefetchSize,
-			'prefetchCount' => $prefetchCount,
-			'global' => $global,
-		];
-	}
-
-
-
-	protected function qosDeclare()
+	protected function qosDeclare() : void
 	{
 		if (!array_filter($this->qosOptions)) {
 			return;
@@ -170,20 +169,6 @@ abstract class BaseConsumer extends AmqpMember
 		);
 
 		$this->qosDeclared = TRUE;
-	}
-
-
-
-	public function setIdleTimeout($seconds)
-	{
-		$this->idleTimeout = $seconds;
-	}
-
-
-
-	public function getIdleTimeout()
-	{
-		return $this->idleTimeout;
 	}
 
 }
