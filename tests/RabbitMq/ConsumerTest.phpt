@@ -26,11 +26,11 @@ class ConsumerTest extends DjTestCase
 	 * Check if the message is requeued or not correctly.
 	 *
 	 * @dataProvider processMessageProvider
-	 * @param bool|int|NULL $processFlag
+	 * @param int|NULL $processFlag
 	 * @param string $expectedMethod
 	 * @param bool|NULL $expectedRequeue
 	 */
-	public function testProcessMessage($processFlag, string $expectedMethod, ?bool $expectedRequeue = NULL) : void
+	public function testProcessMessage(?int $processFlag, string $expectedMethod, ?bool $expectedRequeue = NULL) : void
 	{
 		$connection = $this->mockConnection();
 		$channel = $this->mockChannel();
@@ -72,8 +72,6 @@ class ConsumerTest extends DjTestCase
 	{
 		return [
 			[NULL, 'basic_ack'], // Remove message from queue only if callback return not false
-			[TRUE, 'basic_ack'], // Remove message from queue only if callback return not false
-			[FALSE, 'basic_reject', TRUE], // Reject and requeue message to RabbitMQ
 			[IConsumer::MSG_ACK, 'basic_ack'], // Remove message from queue only if callback return not false
 			[IConsumer::MSG_REJECT_REQUEUE, 'basic_reject', TRUE], // Reject and requeue message to RabbitMQ
 			[IConsumer::MSG_REJECT, 'basic_reject', FALSE], // Reject and drop
