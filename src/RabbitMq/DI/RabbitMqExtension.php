@@ -414,13 +414,4 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 		return Nette\DI\Compiler::filterArguments([is_string($statement) ? new Nette\DI\Statement($statement) : $statement]);
 	}
 
-
-
-	public static function register(Nette\Configurator $configurator)
-	{
-		$configurator->onCompile[] = function ($config, Compiler $compiler) {
-			$compiler->addExtension('rabbitmq', new RabbitMqExtension());
-		};
-	}
-
 }
