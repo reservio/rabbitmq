@@ -65,10 +65,7 @@ rabbitmq:
 					- 'iphone.upload'
 			callback: DamejidloTests\RabbitMq\Callback()
 
-		default_consumer:
-			exchange:
-				name: default_exchange
-				type: direct
+		default_consumer < default_producer:
 			queue:
 				name: default_queue
 			callback: [DamejidloTests\RabbitMq\Callback, staticProcess]

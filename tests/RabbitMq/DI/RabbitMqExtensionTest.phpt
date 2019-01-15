@@ -23,7 +23,7 @@ require_once __DIR__ . '/../../bootstrap.php';
 class RabbitMqExtensionTest extends DjTestCase
 {
 
-	public function testFunctional() : void
+	public function testServices() : void
 	{
 		$container = $this->createContainer();
 
@@ -42,6 +42,17 @@ class RabbitMqExtensionTest extends DjTestCase
 		Assert::type(Consumer::class, $container->getService('rabbitmq.consumer.default_consumer'));
 		Assert::type(Consumer::class, $container->getService('rabbitmq.consumer.qos_test_consumer'));
 		Assert::type(MultipleConsumer::class, $container->getService('rabbitmq.consumer.multi_test_consumer'));
+	}
+
+
+
+	public function testExtendingConsumerFromProducer() : void
+	{
+		$container = $this->createContainer();
+
+		/** @var Consumer $defaultConsumer */
+		$defaultConsumer = $container->getService('rabbitmq.consumer.default_consumer');
+		Assert::same('default_exchange', $defaultConsumer->getExchangeOptions()['name']);
 	}
 
 
