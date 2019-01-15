@@ -20,10 +20,6 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 
 
-/**
- * @author Alvaro Videla <videlalvaro@gmail.com>
- * @author Filip Procházka <filip@prochazka.su>
- */
 class RabbitMqExtension extends Nette\DI\CompilerExtension
 {
 

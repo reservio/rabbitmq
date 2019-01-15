@@ -9,9 +9,6 @@ use PhpAmqpLib\Connection\AMQPLazyConnection;
 
 
 /**
- * @author Alvaro Videla <videlalvaro@gmail.com>
- * @author Filip Procházka <filip@prochazka.su>
- *
  * @property array $exchangeOptions
  * @property array $queueOptions
  */

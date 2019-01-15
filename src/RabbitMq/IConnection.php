@@ -7,9 +7,6 @@ use Nette;
 
 
 
-/**
- * @author Filip Procházka <filip@prochazka.su>
- */
 interface IConnection
 {
 

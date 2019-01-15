@@ -8,9 +8,6 @@ use PhpAmqpLib;
 
 
 
-/**
- * @author Filip Procházka <filip@prochazka.su>
- */
 class Connection extends PhpAmqpLib\Connection\AMQPLazyConnection implements IConnection
 {
 

@@ -3,9 +3,6 @@ declare(strict_types = 1);
 
 namespace Damejidlo\RabbitMq\DI;
 
-/**
- * @author Jan Trejbal <jan.trejbal@gmail.com>
- */
 interface IProducersProvider
 {
 

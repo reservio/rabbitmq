@@ -6,9 +6,6 @@ namespace Damejidlo\RabbitMq;
 
 /**
  * Marker interface for consumers. It's constants can be used for responding on messages.
- *
- * @author Alvaro Videla <videlalvaro@gmail.com>
- * @author Filip Procházka <filip@prochazka.su>
  */
 interface IConsumer
 {

@@ -10,9 +10,6 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 
 /**
- * @author Alvaro Videla <videlalvaro@gmail.com>
- * @author Filip Procházka <filip@prochazka.su>
- *
  * @method onStart(Consumer $self)
  * @method onConsume(Consumer $self, AMQPMessage $msg)
  * @method onReject(Consumer $self, AMQPMessage $msg, $processFlag)

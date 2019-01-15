@@ -7,9 +7,6 @@ use Nette\Utils\Callback;
 
 
 /**
- * @author Alvaro Videla <videlalvaro@gmail.com>
- * @author Filip Procházka <filip@prochazka.su>
- *
  * @method onStop(BaseConsumer $self)
  */
 abstract class BaseConsumer extends AmqpMember
