@@ -226,7 +226,7 @@ Now, how to run a consumer? There's a command for it that can be executed like t
 $ php www/index.php rabbitmq:consumer -m 50 uploadPicture
 ```
 
-What does this mean? First of all, we've used [Damejidlo/Console](https://github.com/Damejidlo/Console/blob/master/docs/en/index.md) here, so have a look at it and then come back.
+What does this mean? First of all, we've used [Kdyby/Console](https://github.com/Kdyby/Console/blob/master/docs/en/index.md) here, so have a look at it and then come back.
 We are executing the `uploadPicture` consumer telling it to consume only 50 messages.
 Every time the consumer receives a message from the server, it will execute the configured callback passing the AMQP message as an instance of the `PhpAmqpLib\Message\AMQPMessage` class.
 The message body can be obtained by calling `$msg->body`. By default the consumer will process messages in an **endless loop** for some definition of _endless_.
@@ -316,15 +316,15 @@ class UploadPictureConsumer implements IConsumer
 	 * Process picture upload.
 	 * $msg will be an instance of `PhpAmqpLib\Message\AMQPMessage` with the $msg->body being the data sent over RabbitMQ.
 	 */
-	public function process(AMQPMessage $msg)
+	public function process(AMQPMessage $msg) : int
 	{
 		$isUploadSuccess = $this->someUploadPictureMethod();
 		if (!$isUploadSuccess) {
-			// If your image upload failed due to a temporary error you can return false
-			// from your callback so the message will be rejected by the consumer and re-queued by RabbitMQ.
-			// Any other value not equal to false will acknowledge the message and remove it from the queue
-			return false;
+			// If your image upload failed due to a temporary error you can reject & requeue the message
+			return IConsumer::MSG_REJECT_REQUEUE;
 		}
+
+		return IConsumer::MSG_ACK;
 	}
 
 }
