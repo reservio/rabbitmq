@@ -1,4 +1,5 @@
 <?php
+declare(strict_types = 1);
 
 namespace Damejidlo\RabbitMq;
 
@@ -15,33 +16,22 @@ class Producer extends AmqpMember implements IProducer
 	protected $contentType = 'text/plain';
 
 	/**
-	 * @var string
+	 * @var int
 	 */
-	protected $deliveryMode = 2;
+	protected $deliveryMode = AMQPMessage::DELIVERY_MODE_PERSISTENT;
 
 
 
-	public function setContentType($contentType)
+	public function setContentType(string $contentType) : void
 	{
 		$this->contentType = $contentType;
-
-		return $this;
 	}
 
 
 
-	public function setDeliveryMode($deliveryMode)
+	public function setDeliveryMode(int $deliveryMode) : void
 	{
 		$this->deliveryMode = $deliveryMode;
-
-		return $this;
-	}
-
-
-
-	protected function getBasicProperties()
-	{
-		return ['content_type' => $this->contentType, 'delivery_mode' => $this->deliveryMode];
 	}
 
 
@@ -50,20 +40,31 @@ class Producer extends AmqpMember implements IProducer
 	 * Publishes the message and merges additional properties with basic properties
 	 *
 	 * @param string $msgBody
-	 * @param string $routingKey If not provided or set to null, used default routingKey from configuration of this producer
-	 * @param array $additionalProperties
+	 * @param string $routingKey if not provided, used default routingKey from configuration of this producer
+	 * @param mixed[] $additionalProperties
 	 */
-	public function publish($msgBody, $routingKey = '', $additionalProperties = [])
+	public function publish(string $msgBody, string $routingKey = '', array $additionalProperties = []) : void
 	{
 		if ($this->autoSetupFabric) {
 			$this->setupFabric();
 		}
 
-		if ($routingKey === '' || $routingKey === NULL) { // empty string or NULL
+		if ($routingKey === '') {
 			$routingKey = $this->routingKey;
 		}
 
-		$msg = new AMQPMessage((string) $msgBody, array_merge($this->getBasicProperties(), $additionalProperties));
-		$this->getChannel()->basic_publish($msg, $this->exchangeOptions['name'], (string) $routingKey);
+		$message = new AMQPMessage($msgBody, array_merge($this->getBasicProperties(), $additionalProperties));
+		$this->getChannel()->basic_publish($message, $this->exchangeOptions['name'], $routingKey);
 	}
+
+
+
+	/**
+	 * @return mixed[]
+	 */
+	protected function getBasicProperties() : array
+	{
+		return ['content_type' => $this->contentType, 'delivery_mode' => $this->deliveryMode];
+	}
+
 }
