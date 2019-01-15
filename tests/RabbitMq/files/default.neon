@@ -105,26 +105,6 @@ rabbitmq:
 						- 'iphone.upload'
 					callback: DamejidloTests\RabbitMq\Callback()
 
-		foo_anon_consumer:
-			connection: foo_connection
-			exchange:
-				name: foo_anon_exchange
-				type: direct
-				passive: true
-				durable: false
-				autoDelete:  true
-				internal: true
-				nowait: true
-				arguments: null
-				ticket: null
-			callback: DamejidloTests\RabbitMq\Callback()
-
-		default_anon_consumer:
-			exchange:
-				name: default_anon_exchange
-				type: direct
-			callback: DamejidloTests\RabbitMq\Callback()
-
 
 services:
 	collecting_callback: DamejidloTests\RabbitMq\Callback

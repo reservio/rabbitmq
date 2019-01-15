@@ -307,10 +307,6 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 					->addSetup('setQueueOptions', [$this->mergeConfig($config['queue'], $this->queueDefaults)])
 					->addSetup('setCallback', [self::fixCallback($config['callback'])]);
 
-			} else {
-				$consumer
-					->setClass('Damejidlo\RabbitMq\AnonymousConsumer')
-					->addSetup('setCallback', [self::fixCallback($config['callback'])]);
 			}
 
 			$consumer->setArguments(['@' . $this->connectionsMeta[$config['connection']]['serviceId']]);

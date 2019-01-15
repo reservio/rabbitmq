@@ -388,61 +388,6 @@ All the options of `queues` in the consumer are available for each queue.
 Be aware that all queues are under the same exchange, it's up to you to set the correct routing for callbacks.
 
 
-### Anonymous Consumers
-
-Now, why will we ever need anonymous consumers? This sounds like some internet threat or something… Keep reading.
-
-In AMQP there's a type of exchange called **topic** where the messages are routed to queues based on –you guess– the topic of the message.
-We can send logs about our application to a RabbiMQ topic exchange using as topic the hostname where the log was created and the severity of such log.
-The message body will be the log content and our routing keys the will be like this:
-
-- server1.error
-- server2.info
-- server1.warning
-- ...
-
-Since we don't want to be filling up queues with unlimited logs what we can do is that when we want to monitor the system,
-we can launch a consumer that creates a queue and attaches to the `logs` exchange based on some topic, for example, we would like to see all the errors reported by our servers.
-The routing key will be something like: `#.error`. In such case we have to come up with a queue name, bind it to the exchange, get the logs, unbind it and delete the queue.
-
-Luckily, AMPQ provides a way to do this automatically, if you provide the right options when you declare and bind the queue.
-The problem is that you don't want to remember all those options. For such reason we implemented the `Anonymous Consumer` pattern.
-
-When we start an Anonymous Consumer, it will take care of such details and we just have to think about implementing the callback for when the messages arrive.
-Is it called Anonymous because it won't specify a queue name, but it will wait for RabbitMQ to assign a random one to it.
-
-Now, how to configure and run such consumer? By simply **not specifying** the queue options.
-
-```yaml
-	...
-	consumers:
-		logsWatcher:
-			exchange: {name: 'app-logs', type: topic}
-			callback: [@App\LogWatcher, consume]
-	...
-```
-
-There we specify the exchange name and it's type along with the callback that should be executed when a message arrives.
-
-This Anonymous Consumer is now able to listen to Producers, which are linked to the same exchange and of type _topic_:
-
-```yaml
-	...
-	producers:
-		appLogs:
-			exchange: {name: 'app-logs', type: topic}
-	...
-```
-
-To start an _Anonymous Consumer_ we use the following command:
-
-```bash
-$ php www/index.php rabbitmq:anon-consumer -m 5 -r '#.error' logs_watcher
-```
-
-The only new option compared to the commands that we have seen before is the one that specifies the routing key `-r '#.error'`.
-
-
 ## Other Commands
 
 ### Setting up the RabbitMQ fabric
