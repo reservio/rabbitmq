@@ -94,7 +94,7 @@ rabbitmq:
 			queues:
 				multi-test-1:
 					name: multi_test_1
-					callback: [@DamejidloTests\RabbitMq\Callback, process]
+					callback: @DamejidloTests\RabbitMq\Callback::process
 				multi-test-2:
 					name: foo_bar_2
 					passive: true
