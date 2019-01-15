@@ -16,7 +16,7 @@ Now you have to enable the extension using your neon config
 
 ```yml
 extensions:
-	rabbitmq: Damejidlo\RabbitMq\DI\RabbitMqExtension
+	rabbitmq: Damejidlo\RabbitMq\DI\RabbitMqExtension(%debugMode%)
 ```
 
 And done!

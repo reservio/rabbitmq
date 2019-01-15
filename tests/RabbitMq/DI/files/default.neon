@@ -1,5 +1,5 @@
 extensions:
-	rabbitmq: Damejidlo\RabbitMq\DI\RabbitMqExtension
+	rabbitmq: Damejidlo\RabbitMq\DI\RabbitMqExtension(false)
 
 
 rabbitmq:

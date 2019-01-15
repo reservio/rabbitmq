@@ -1,9 +1,7 @@
 <?php
+declare(strict_types = 1);
 
 namespace Damejidlo\RabbitMq\DI;
-
-use Damejidlo;
-use Nette;
 
 /**
  * @author Jan Trejbal <jan.trejbal@gmail.com>
@@ -14,7 +12,8 @@ interface IProducersProvider
 	/**
 	 * Returns array of name => array config.
 	 *
-	 * @return array
+	 * @return mixed[]
 	 */
-	function getRabbitProducers();
+	public function getRabbitProducers() : array;
+
 }
