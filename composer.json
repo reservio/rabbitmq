@@ -49,6 +49,11 @@
 			"src/RabbitMq/exceptions.php"
 		]
 	},
+	"autoload-dev": {
+		"classmap": [
+			"tests/"
+		]
+	},
 	"extra": {
 		"branch-alias": {
 			"dev-master": "2.0-dev"

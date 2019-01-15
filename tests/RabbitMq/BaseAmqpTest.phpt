@@ -1,35 +1,29 @@
 <?php
-
-/**
- * Test: Damejidlo\RabbitMq\Extension.
- *
- * @testCase DamejidloTests\RabbitMq\BaseAmqpTest
- * @package Damejidlo\RabbitMq
- */
+declare(strict_types = 1);
 
 namespace DamejidloTests\RabbitMq;
 
-use Damejidlo;
 use Damejidlo\RabbitMq\Connection;
 use Damejidlo\RabbitMq\Consumer;
-use DamejidloTests;
-use Nette;
-use Tester;
+use DamejidloTests\DjTestCase;
 use Tester\Assert;
 
+require_once __DIR__ . '/../bootstrap.php';
 
 
-require_once __DIR__ . '/TestCase.php';
 
-class BaseAmqpTest extends TestCase
+/**
+ * @testCase
+ */
+class BaseAmqpTest extends DjTestCase
 {
 
-	public function testLazyConnection()
+	public function testLazyConnection() : void
 	{
-		$lazyConnection = new Connection('localhost', 123, 'lazy_user', 'lazy_password');
+		$lazyConnection = new Connection('localhost', '123', 'lazy_user', 'lazy_password');
 		$consumer = new Consumer($lazyConnection);
 
-		Assert::exception(function () use ($consumer) {
+		Assert::exception(function () use ($consumer) : void {
 			$consumer->getChannel();
 		}, \ErrorException::class, 'stream_socket_client(): unable to connect to tcp://localhost:123 (%a%)');
 	}

@@ -1,3 +1,7 @@
+extensions:
+	rabbitmq: Damejidlo\RabbitMq\DI\RabbitMqExtension
+
+
 rabbitmq:
 	debugger: false
 
