@@ -442,49 +442,6 @@ $ php www/index.php rabbitmq:anon-consumer -m 5 -r '#.error' logs_watcher
 
 The only new option compared to the commands that we have seen before is the one that specifies the routing key `-r '#.error'`.
 
-### STDIN Producer
-
-There's a Command that reads data from STDIN and publishes it to a RabbitMQ queue. To use it first you have to configure a `producer` service in your configuration file like this:
-
-```yaml
-	...
-	producers:
-		words:
-			connection: default
-			exchange: {name: 'words', type: direct}
-	...
-```
-
-That producer will publish messages to the `words` direct exchange. Of course you can adapt the configuration to whatever you like.
-
-Then let's say you want to publish the contents of some XML files so they are processed by a farm of consumers. You could publish them by just using a command like this:
-
-```bash
-$ find vendor/symfony/ -name "*.xml" -print0 | xargs -0 cat | php www/index.php rabbitmq:stdin-producer words
-```
-
-This means you can compose producers with plain Unix commands.
-
-Let's decompose that one liner:
-
-```bash
-$ find vendor/symfony/ -name "*.xml" -print0
-```
-
-That command will find all the `.xml` files inside the symfony folder and will print the file name. Each of those file names is then _piped_ to `cat` via `xargs`:
-
-```bash
-$ xargs -0 cat
-```
-
-And finally the output of `cat` goes directly to our producer that is invoked like this:
-
-```bash
-$ php www/index.php rabbitmq:stdin-producer words
-```
-
-It takes only one argument which is the name of the producer as you configured it in your `config.yml` file.
-
 
 ## Other Commands
 

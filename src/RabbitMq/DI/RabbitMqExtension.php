@@ -381,7 +381,6 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 			'Damejidlo\RabbitMq\Command\ConsumerCommand',
 			'Damejidlo\RabbitMq\Command\PurgeConsumerCommand',
 			'Damejidlo\RabbitMq\Command\SetupFabricCommand',
-			'Damejidlo\RabbitMq\Command\StdInProducerCommand',
 		] as $i => $class) {
 			$builder->addDefinition($this->prefix('console.' . $i))
 				->setClass($class)
