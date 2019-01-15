@@ -62,45 +62,13 @@ class Connection extends PhpAmqpLib\Connection\AMQPLazyConnection implements ICo
 
 
 	/**
-	 * @param $name
-	 * @return RpcClient
-	 */
-	public function getRpcClient($name)
-	{
-		if (!isset($this->serviceMap['rpcClient'][$name])) {
-			throw new InvalidArgumentException("Unknown RPC client {$name}");
-		}
-
-		return $this->serviceLocator->getService($this->serviceMap['rpcClient'][$name]);
-	}
-
-
-
-	/**
-	 * @param $name
-	 * @return RpcServer
-	 */
-	public function getRpcServer($name)
-	{
-		if (!isset($this->serviceMap['rpcServer'][$name])) {
-			throw new InvalidArgumentException("Unknown RPC server {$name}");
-		}
-
-		return $this->serviceLocator->getService($this->serviceMap['rpcServer'][$name]);
-	}
-
-
-
-	/**
 	 * @internal
 	 */
-	public function injectServiceMap(array $producers, array $consumers, array $rpcClients, array $rpcServers)
+	public function injectServiceMap(array $producers, array $consumers)
 	{
 		$this->serviceMap = [
 			'consumer' => $consumers,
 			'producer' => $producers,
-			'rpcClient' => $rpcClients,
-			'rpcServer' => $rpcServers,
 		];
 	}
 

@@ -47,8 +47,6 @@ class SetupFabricCommand extends Command
 		foreach ([
 			RabbitMqExtension::TAG_PRODUCER,
 			RabbitMqExtension::TAG_CONSUMER,
-			RabbitMqExtension::TAG_RPC_CLIENT,
-			RabbitMqExtension::TAG_RPC_SERVER
 		] as $tag) {
 			foreach ($this->container->findByTag($tag) as $serviceId => $meta) {
 				/** @var AmqpMember $service */

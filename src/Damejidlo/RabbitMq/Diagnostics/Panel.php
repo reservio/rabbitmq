@@ -34,11 +34,10 @@ class Panel implements IBarPanel
 
 
 
-	public function injectServiceMap(array $consumers, array $rpcServers)
+	public function injectServiceMap(array $consumers)
 	{
 		$this->serviceMap = [
 			'consumer' => $consumers,
-			'rpcServer' => $rpcServers,
 		];
 	}
 
@@ -73,7 +72,7 @@ class Panel implements IBarPanel
 			}
 
 			$command = sprintf('ps aux |grep %s |grep %s',
-				($type === 'consumer' ? 'rabbitmq:consumer' : 'rabbitmq:rpc-server'),
+				'rabbitmq:consumer',
 				escapeshellarg($name)
 			);
 

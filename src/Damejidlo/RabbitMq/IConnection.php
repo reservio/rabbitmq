@@ -27,20 +27,4 @@ interface IConnection
 	 */
 	function getProducer($name);
 
-
-
-	/**
-	 * @param $name
-	 * @return RpcClient
-	 */
-	function getRpcClient($name);
-
-
-
-	/**
-	 * @param $name
-	 * @return RpcServer
-	 */
-	function getRpcServer($name);
-
 }

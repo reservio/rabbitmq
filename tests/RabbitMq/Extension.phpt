@@ -64,12 +64,6 @@ class ExtensionTest extends TestCase
 		Assert::true($dic->getService('rabbitmq.consumer.multi_test_consumer') instanceof Damejidlo\RabbitMq\MultipleConsumer);
 		Assert::true($dic->getService('rabbitmq.consumer.foo_anon_consumer') instanceof Damejidlo\RabbitMq\AnonymousConsumer);
 		Assert::true($dic->getService('rabbitmq.consumer.default_anon_consumer') instanceof Damejidlo\RabbitMq\AnonymousConsumer);
-
-		Assert::true($dic->getService('rabbitmq.rpcClient.foo_client') instanceof Damejidlo\RabbitMq\RpcClient);
-		Assert::true($dic->getService('rabbitmq.rpcClient.default_client') instanceof Damejidlo\RabbitMq\RpcClient);
-
-		Assert::true($dic->getService('rabbitmq.rpcServer.foo_server') instanceof Damejidlo\RabbitMq\RpcServer);
-		Assert::true($dic->getService('rabbitmq.rpcServer.default_server') instanceof Damejidlo\RabbitMq\RpcServer);
 	}
 
 }

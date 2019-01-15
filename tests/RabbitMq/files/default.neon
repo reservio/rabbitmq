@@ -126,21 +126,5 @@ rabbitmq:
 			callback: DamejidloTests\RabbitMq\Callback()
 
 
-	rpcClients:
-		foo_client:
-			connection: foo_connection
-
-		default_client:
-
-
-	rpcServers:
-		foo_server:
-			connection: foo_connection
-			callback: DamejidloTests\RabbitMq\Callback()
-
-		default_server:
-			callback: DamejidloTests\RabbitMq\Callback()
-
-
 services:
 	collecting_callback: DamejidloTests\RabbitMq\Callback
