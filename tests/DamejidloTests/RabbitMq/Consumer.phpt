@@ -81,4 +81,4 @@ class ConsumerTest extends TestCase
 
 }
 
-\run(new ConsumerTest());
+(new ConsumerTest())->run();

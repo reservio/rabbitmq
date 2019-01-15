@@ -36,4 +36,4 @@ class BaseAmqpTest extends TestCase
 
 }
 
-\run(new BaseAmqpTest());
+(new BaseAmqpTest())->run();

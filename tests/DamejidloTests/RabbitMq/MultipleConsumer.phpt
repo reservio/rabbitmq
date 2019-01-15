@@ -83,4 +83,4 @@ class MultipleConsumerTest extends TestCase
 
 }
 
-\run(new MultipleConsumerTest());
+(new MultipleConsumerTest())->run();
