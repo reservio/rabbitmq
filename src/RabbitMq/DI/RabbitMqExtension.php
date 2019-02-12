@@ -77,6 +77,8 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 	 * @var mixed[]
 	 */
 	public $exchangeDefaults = [
+		'name' => NULL,
+		'type' => 'direct',
 		'passive' => FALSE,
 		'durable' => TRUE,
 		'autoDelete' => FALSE,
@@ -177,8 +179,7 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 
 		$builder = $this->getContainerBuilder();
 		foreach ($connections as $name => $config) {
-			/** @var mixed[] $config */
-			$config = Helpers::merge($config, $this->connectionDefaults);
+			$config = $this->validateConfig($this->connectionDefaults, $config, "{$this->name}.connection.{$name}");
 
 			Nette\Utils\Validators::assertField($config, 'user', 'string:3..', "The config item '%' of connection {$this->name}.{$name}");
 			Nette\Utils\Validators::assertField($config, 'password', 'string:3..', "The config item '%' of connection {$this->name}.{$name}");
@@ -219,8 +220,7 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 
 		$builder = $this->getContainerBuilder();
 		foreach ($producers as $name => $config) {
-			/** @var mixed[] $config */
-			$config = Helpers::merge($config, $producerDefaults);
+			$config = $this->validateConfig($producerDefaults, $config, "{$this->name}.producers.{$name}");
 
 			if (!isset($this->connectionsMeta[$config['connection']])) {
 				throw new AssertionException("Connection {$config['connection']} required in producer {$this->name}.{$name} was not defined.");
@@ -236,13 +236,13 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 				->addTag(self::TAG_PRODUCER);
 
 			if (!empty($config['exchange'])) {
-				$config['exchange'] = Helpers::merge($config['exchange'], $this->exchangeDefaults);
+				$config['exchange'] = $this->validateConfig($this->exchangeDefaults, $config['exchange'], "{$this->name}.producers.{$name}.exchange");
 				Validators::assertField($config['exchange'], 'name', 'string:3..', "The config item 'exchange.%' of producer {$this->name}.{$name}");
 				Validators::assertField($config['exchange'], 'type', 'string:3..', "The config item 'exchange.%' of producer {$this->name}.{$name}");
 				$producer->addSetup('setExchangeOptions', [$config['exchange']]);
 			}
 
-			$config['queue'] = Helpers::merge($config['queue'], $this->queueDefaults);
+			$config['queue'] = $this->validateConfig($this->queueDefaults, $config['queue'], "{$this->name}.producers.{$name}.queue");
 			$producer->addSetup('setQueueOptions', [$config['queue']]);
 
 			if ($config['autoSetupFabric'] === FALSE) {
@@ -266,8 +266,7 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 
 		$builder = $this->getContainerBuilder();
 		foreach ($consumers as $name => $config) {
-			/** @var mixed[] $config */
-			$config = Helpers::merge($config, $consumerDefaults);
+			$config = $this->validateConfig($consumerDefaults, $config, "{$this->name}.consumers.{$name}");
 			$config = $this->extendConsumerFromProducer($name, $config);
 
 			if (!isset($this->connectionsMeta[$config['connection']])) {
@@ -280,16 +279,17 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 				->setAutowired(FALSE);
 
 			if (!empty($config['exchange'])) {
-				$config['exchange'] = Helpers::merge($config['exchange'], $this->exchangeDefaults);
+				$config['exchange'] = $this->validateConfig($this->exchangeDefaults, $config['exchange'], "{$this->name}.consumers.{$name}.exchange");
 				Validators::assertField($config['exchange'], 'name', 'string:3..', "The config item 'exchange.%' of consumer {$this->name}.{$name}");
 				Validators::assertField($config['exchange'], 'type', 'string:3..', "The config item 'exchange.%' of consumer {$this->name}.{$name}");
 				$consumer->addSetup('setExchangeOptions', [$config['exchange']]);
 			}
 
 			if (!empty($config['queue'])) {
+				$config['queue'] = $this->validateConfig($this->queueDefaults, $config['queue'], "{$this->name}.consumers.{$name}.queue");
 				$consumer
 					->setClass(Consumer::class)
-					->addSetup('setQueueOptions', [Helpers::merge($config['queue'], $this->queueDefaults)])
+					->addSetup('setQueueOptions', [$config['queue']])
 					->addSetup('setCallback', [$this->fixCallback($config['callback'])]);
 
 			}
