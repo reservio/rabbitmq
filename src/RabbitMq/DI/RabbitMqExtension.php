@@ -110,7 +110,6 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 	public $qosDefaults = [
 		'prefetchSize' => 0,
 		'prefetchCount' => 0,
-		'global' => FALSE,
 	];
 
 	/**
@@ -302,7 +301,6 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 				$consumer->addSetup('setQosOptions', [
 					$config['qos']['prefetchSize'],
 					$config['qos']['prefetchCount'],
-					$config['qos']['global'],
 				]);
 			}
 

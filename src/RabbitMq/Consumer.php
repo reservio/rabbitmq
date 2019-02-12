@@ -68,7 +68,6 @@ class Consumer extends AmqpMember
 	protected $qosOptions = [
 		'prefetchSize' => 0,
 		'prefetchCount' => 0,
-		'global' => FALSE,
 	];
 
 	/**
@@ -116,12 +115,11 @@ class Consumer extends AmqpMember
 
 
 
-	public function setQosOptions(int $prefetchSize = 0, int $prefetchCount = 0, bool $global = FALSE) : void
+	public function setQosOptions(int $prefetchSize = 0, int $prefetchCount = 0) : void
 	{
 		$this->qosOptions = [
 			'prefetchSize' => $prefetchSize,
 			'prefetchCount' => $prefetchCount,
-			'global' => $global,
 		];
 	}
 
@@ -316,7 +314,7 @@ class Consumer extends AmqpMember
 		$this->getChannel()->basic_qos(
 			$this->qosOptions['prefetchSize'],
 			$this->qosOptions['prefetchCount'],
-			$this->qosOptions['global']
+			FALSE
 		);
 
 		$this->qosDeclared = TRUE;

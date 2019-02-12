@@ -78,7 +78,6 @@ rabbitmq:
 			qos:
 				prefetchSize: 1024
 				prefetchCount:  1
-				global: true
 			callback: [@collecting_callback, process]
 
 

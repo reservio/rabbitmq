@@ -293,7 +293,7 @@ With RabbitMqBundle, you can configure that qos per consumer like that:
 	...
 	consumers:
 		uploadPicture:
-			qos: {prefetchSize: 0, prefetchCount: 1, global: false}
+			qos: {prefetchSize: 0, prefetchCount: 1}
 	...
 ```
 
