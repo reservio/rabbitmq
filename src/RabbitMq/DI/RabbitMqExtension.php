@@ -105,7 +105,7 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 	 */
 	public $qosDefaults = [
 		'prefetchSize' => 0,
-		'prefetchCount' => 0,
+		'prefetchCount' => 1,
 	];
 
 	/**

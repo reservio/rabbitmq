@@ -49,7 +49,7 @@ class ConsumerCommand extends Command
 			->setDescription('Starts configured consumers')
 			->addArgument('consumers', InputArgument::REQUIRED | InputArgument::IS_ARRAY, 'Consumer names')
 			->addOption('messages', 'm', InputOption::VALUE_OPTIONAL, 'Messages to consume', 0)
-			->addOption('idle-timeout', 't', InputOption::VALUE_OPTIONAL, 'Idle timeout in seconds', 0)
+			->addOption('idle-timeout', 't', InputOption::VALUE_OPTIONAL, 'Idle timeout in seconds', 10)
 			->addOption('memory-limit', 'l', InputOption::VALUE_OPTIONAL, 'Allowed memory for this process', NULL)
 			->addOption('debug', 'd', InputOption::VALUE_NONE, 'Enable Debugging')
 			->addOption('without-signals', 'w', InputOption::VALUE_NONE, 'Disable catching of system signals');
