@@ -3,7 +3,6 @@ declare(strict_types = 1);
 
 namespace Damejidlo\RabbitMq\Command;
 
-use Damejidlo\RabbitMq\BaseConsumer;
 use Damejidlo\RabbitMq\Connection;
 use Damejidlo\RabbitMq\Consumer;
 use Nette\Utils\Validators;
@@ -25,7 +24,7 @@ class ConsumerCommand extends Command
 	public $connection;
 
 	/**
-	 * @var BaseConsumer
+	 * @var Consumer
 	 */
 	protected $consumer;
 

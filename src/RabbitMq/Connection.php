@@ -23,13 +23,13 @@ class Connection extends AMQPLazyConnection
 
 
 
-	public function getConsumer(string $name) : BaseConsumer
+	public function getConsumer(string $name) : Consumer
 	{
 		if (!isset($this->serviceMap['consumer'][$name])) {
 			throw new \InvalidArgumentException("Unknown consumer {$name}");
 		}
 
-		/** @var BaseConsumer $consumer */
+		/** @var Consumer $consumer */
 		$consumer = $this->serviceLocator->getService($this->serviceMap['consumer'][$name]);
 
 		return $consumer;
