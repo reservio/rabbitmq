@@ -22,6 +22,16 @@ use PhpAmqpLib\Message\AMQPMessage;
 class Consumer extends AmqpMember
 {
 
+	public const DEFAULT_QUEUE_OPTIONS = [
+		'passive' => FALSE,
+		'durable' => TRUE,
+		'exclusive' => FALSE,
+		'autoDelete' => FALSE,
+		'nowait' => FALSE,
+		'arguments' => NULL,
+		'ticket' => NULL,
+	];
+
 	/**
 	 * @var callable[]
 	 */
@@ -60,7 +70,17 @@ class Consumer extends AmqpMember
 	/**
 	 * @var string
 	 */
-	protected $consumerTag;
+	protected $queueName;
+
+	/**
+	 * @var callable
+	 */
+	protected $callback;
+
+	/**
+	 * @var mixed[]
+	 */
+	protected $queueOptions;
 
 	/**
 	 * @var int
@@ -73,9 +93,9 @@ class Consumer extends AmqpMember
 	protected $prefetchCount;
 
 	/**
-	 * @var callable
+	 * @var string
 	 */
-	protected $callback;
+	protected $consumerTag;
 
 	/**
 	 * @var int|NULL
@@ -108,21 +128,6 @@ class Consumer extends AmqpMember
 	protected $qosDeclared = FALSE;
 
 	/**
-	 * @var mixed[]
-	 */
-	protected $queueOptions = [
-		'name' => '',
-		'passive' => FALSE,
-		'durable' => TRUE,
-		'exclusive' => FALSE,
-		'autoDelete' => FALSE,
-		'nowait' => FALSE,
-		'arguments' => NULL,
-		'ticket' => NULL,
-		'routing_keys' => [],
-	];
-
-	/**
 	 * @var bool
 	 */
 	protected $queueDeclared = FALSE;
@@ -130,56 +135,42 @@ class Consumer extends AmqpMember
 	/**
 	 * @var string[][]
 	 */
-	protected $binding = [];
+	protected $bindings = [];
 
 
 
-	public function __construct(Connection $connection, string $consumerTag = '')
-	{
+	/**
+	 * @param Connection $connection
+	 * @param string $queueName
+	 * @param callable $callback
+	 * @param mixed[] $queueOptions
+	 * @param int $prefetchSize
+	 * @param int $prefetchCount
+	 * @param string $consumerTag
+	 */
+	public function __construct(
+		Connection $connection,
+		string $queueName,
+		callable $callback,
+		array $queueOptions = [],
+		int $prefetchSize = 0,
+		int $prefetchCount = 0,
+		string $consumerTag = ''
+	) {
 		parent::__construct($connection);
-		$this->consumerTag = $consumerTag === '' ? sprintf("PHPPROCESS_%s_%s", gethostname(), getmypid()) : $consumerTag;
-	}
-
-
-
-	public function setQosOptions(int $prefetchSize = 0, int $prefetchCount = 0) : void
-	{
+		$this->queueName = $queueName;
+		$this->callback = $callback;
+		$this->queueOptions = $queueOptions + self::DEFAULT_QUEUE_OPTIONS;
 		$this->prefetchSize = $prefetchSize;
 		$this->prefetchCount = $prefetchCount;
-	}
-
-
-
-	/**
-	 * @param mixed[] $options
-	 */
-	public function setQueueOptions(array $options = []) : void
-	{
-		$this->queueOptions = $options + $this->queueOptions;
-	}
-
-
-
-	/**
-	 * @return mixed[]
-	 */
-	public function getQueueOptions() : array
-	{
-		return $this->queueOptions;
+		$this->consumerTag = $consumerTag === '' ? sprintf("PHPPROCESS_%s_%s_%s", gethostname(), getmypid(), $queueName) : $consumerTag;
 	}
 
 
 
 	public function addBinding(string $exchange, string $routingKey = '') : void
 	{
-		$this->binding[$exchange][] = $routingKey;
-	}
-
-
-
-	public function setCallback(callable $callback) : void
-	{
-		$this->callback = $callback;
+		$this->bindings[$exchange][] = $routingKey;
 	}
 
 
@@ -208,6 +199,33 @@ class Consumer extends AmqpMember
 	public function getIdleTimeout() : int
 	{
 		return $this->idleTimeout;
+	}
+
+
+
+	public function setupFabric() : void
+	{
+		if ($this->queueDeclared) {
+			return;
+		}
+
+		$this->getChannel()->queue_declare(
+			$this->queueName,
+			$this->queueOptions['passive'],
+			$this->queueOptions['durable'],
+			$this->queueOptions['exclusive'],
+			$this->queueOptions['autoDelete'],
+			$this->queueOptions['nowait'],
+			$this->queueOptions['arguments'],
+			$this->queueOptions['ticket']
+		);
+
+		foreach ($this->bindings as $exchangeName => $routingKeys) {
+			foreach ($routingKeys as $routingKey) {
+				$this->getChannel()->queue_bind($this->queueName, $exchangeName, $routingKey);
+			}
+		}
+		$this->queueDeclared = TRUE;
 	}
 
 
@@ -310,7 +328,7 @@ class Consumer extends AmqpMember
 
 	public function purge() : void
 	{
-		$this->getChannel()->queue_purge($this->queueOptions['name'], TRUE);
+		$this->getChannel()->queue_purge($this->queueName, TRUE);
 	}
 
 
@@ -321,12 +339,10 @@ class Consumer extends AmqpMember
 			$this->setupFabric();
 		}
 
-		if (!$this->qosDeclared) {
-			$this->qosDeclare();
-		}
+		$this->qosDeclare();
 
 		$this->getChannel()->basic_consume(
-			$this->queueOptions['name'],
+			$this->queueName,
 			$this->getConsumerTag(),
 			$this->queueOptions['noLocal'],
 			$this->queueOptions['noAck'],
@@ -359,6 +375,10 @@ class Consumer extends AmqpMember
 
 	protected function qosDeclare() : void
 	{
+		if ($this->qosDeclared) {
+			return;
+		}
+
 		if ($this->prefetchSize !== 0 || $this->prefetchCount !== 0) {
 			$this->getChannel()->basic_qos(
 				$this->prefetchSize,
@@ -415,53 +435,6 @@ class Consumer extends AmqpMember
 		}
 
 		return memory_get_usage(TRUE) >= ($this->getMemoryLimit() * 1024 * 1024);
-	}
-
-
-
-	public function setupFabric() : void
-	{
-		if (!$this->queueDeclared) {
-			$this->queueDeclare();
-		}
-	}
-
-
-
-	protected function queueDeclare() : void
-	{
-		if (empty($this->queueOptions['name'])) {
-			return;
-		}
-
-		$this->doQueueDeclare($this->queueOptions['name'], $this->queueOptions);
-		$this->queueDeclared = TRUE;
-	}
-
-
-
-	/**
-	 * @param string $name
-	 * @param mixed[] $options
-	 */
-	protected function doQueueDeclare(string $name, array $options) : void
-	{
-		list($queueName, ,) = $this->getChannel()->queue_declare(
-			$name,
-			$options['passive'],
-			$options['durable'],
-			$options['exclusive'],
-			$options['autoDelete'],
-			$options['nowait'],
-			$options['arguments'],
-			$options['ticket']
-		);
-
-		foreach ($this->binding as $exchangeName => $routingKeys) {
-			foreach ($routingKeys as $routingKey) {
-				$this->getChannel()->queue_bind($queueName, $exchangeName, $routingKey);
-			}
-		}
 	}
 
 }

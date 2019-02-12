@@ -21,7 +21,7 @@ class BaseAmqpTest extends DjTestCase
 	public function testLazyConnection() : void
 	{
 		$lazyConnection = new Connection('localhost', '123', 'lazy_user', 'lazy_password');
-		$consumer = new Consumer($lazyConnection);
+		$consumer = new Consumer($lazyConnection, 'queue', new Callback());
 
 		Assert::exception(function () use ($consumer) : void {
 			$consumer->getChannel();

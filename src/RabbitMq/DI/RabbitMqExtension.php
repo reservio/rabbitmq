@@ -276,16 +276,27 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 				throw new AssertionException("Connection {$config['connection']} required in consumer {$this->name}.{$name} was not defined.");
 			}
 
+			$config['queue'] = $this->validateConfig($this->queueDefaults, $config['queue'], "{$this->name}.consumers.{$name}.queue");
+
+			Validators::assertField($config['queue'], 'name', 'string:3..', "The config item 'queue.%' of consumer {$this->name}.{$name}");
+			$queueName = $config['queue']['name'];
+			unset($config['queue']['name']);
+
+			$config['qos'] = $this->validateConfig($this->qosDefaults, $config['qos'], "{$this->name}.consumers.{$name}");
+
 			$serviceName = $this->prefix('consumer.' . $name);
 			$consumer = $builder->addDefinition($serviceName)
+				->setClass(Consumer::class)
+				->setArguments([
+					'connection' => '@' . $this->connectionsMeta[$config['connection']]['serviceId'],
+					'queueName' => $queueName,
+					'callback' => $this->fixCallback($config['callback']),
+					'queueOptions' => $config['queue'],
+					'prefetchSize' => $config['qos']['prefetchSize'],
+					'prefetchCount' => $config['qos']['prefetchCount'],
+				])
 				->addTag(self::TAG_CONSUMER)
 				->setAutowired(FALSE);
-
-			$config['queue'] = $this->validateConfig($this->queueDefaults, $config['queue'], "{$this->name}.consumers.{$name}.queue");
-			$consumer
-				->setClass(Consumer::class)
-				->addSetup('setQueueOptions', [$config['queue']])
-				->addSetup('setCallback', [$this->fixCallback($config['callback'])]);
 
 			Validators::assert($config['binding'], 'array[]', "The config item 'binding.%' of consumer {$this->name}.{$name}");
 			foreach ($config['binding'] as $i => $binding) {
@@ -293,14 +304,6 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 				Validators::assertField($binding, 'exchange', 'string:3..', "The config item 'binding[$i].%' of consumer {$this->name}.{$name}");
 				$consumer->addSetup('addBinding', $binding);
 			}
-
-			$consumer->setArguments(['@' . $this->connectionsMeta[$config['connection']]['serviceId']]);
-
-			$config['qos'] = $this->validateConfig($this->qosDefaults, $config['qos'], "{$this->name}.consumers.{$name}");
-			$consumer->addSetup('setQosOptions', [
-				$config['qos']['prefetchSize'],
-				$config['qos']['prefetchCount'],
-			]);
 
 			if ($config['idleTimeout']) {
 				$consumer->addSetup('setIdleTimeout', [$config['idleTimeout']]);

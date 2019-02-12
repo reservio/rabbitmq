@@ -35,13 +35,11 @@ class ConsumerTest extends DjTestCase
 		$channel = $this->mockChannel();
 		$connection = $this->mockConnection($channel);
 
-		$consumer = new Consumer($connection);
-
 		// Create a callback function with a return value set by the data provider.
 		$callbackFunction = function () use ($processFlag) : int {
 			return $processFlag;
 		};
-		$consumer->setCallback($callbackFunction);
+		$consumer = new Consumer($connection, 'queue', $callbackFunction);
 
 		// Create a default message
 		$message = new AMQPMessage('foo body');
@@ -75,12 +73,10 @@ class ConsumerTest extends DjTestCase
 		$channel = $this->mockChannel();
 		$connection = $this->mockConnection($channel);
 
-		$consumer = new Consumer($connection);
-
 		$callbackFunction = function () : int {
 			return 666;
 		};
-		$consumer->setCallback($callbackFunction);
+		$consumer = new Consumer($connection, 'queue', $callbackFunction);
 
 		// Create a default message
 		$message = new AMQPMessage('foo body');
