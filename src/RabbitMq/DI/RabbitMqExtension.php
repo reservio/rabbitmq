@@ -296,13 +296,11 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 
 			$consumer->setArguments(['@' . $this->connectionsMeta[$config['connection']]['serviceId']]);
 
-			if (array_filter($config['qos']) !== []) { // has values
-				$config['qos'] = Helpers::merge($config['qos'], $this->qosDefaults);
-				$consumer->addSetup('setQosOptions', [
-					$config['qos']['prefetchSize'],
-					$config['qos']['prefetchCount'],
-				]);
-			}
+			$config['qos'] = $this->validateConfig($this->qosDefaults, $config['qos'], "{$this->name}.consumers.{$name}");
+			$consumer->addSetup('setQosOptions', [
+				$config['qos']['prefetchSize'],
+				$config['qos']['prefetchCount'],
+			]);
 
 			if ($config['idleTimeout']) {
 				$consumer->addSetup('setIdleTimeout', [$config['idleTimeout']]);
