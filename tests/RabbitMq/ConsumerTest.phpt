@@ -32,11 +32,10 @@ class ConsumerTest extends DjTestCase
 	 */
 	public function testProcessMessage(int $processFlag, string $expectedMethod, ?bool $expectedRequeue = NULL) : void
 	{
-		$connection = $this->mockConnection();
 		$channel = $this->mockChannel();
+		$connection = $this->mockConnection($channel);
 
 		$consumer = new Consumer($connection);
-		$consumer->setChannel($channel);
 
 		// Create a callback function with a return value set by the data provider.
 		$callbackFunction = function () use ($processFlag) : int {
@@ -73,11 +72,10 @@ class ConsumerTest extends DjTestCase
 
 	public function testInvalidResponse() : void
 	{
-		$connection = $this->mockConnection();
 		$channel = $this->mockChannel();
+		$connection = $this->mockConnection($channel);
 
 		$consumer = new Consumer($connection);
-		$consumer->setChannel($channel);
 
 		$callbackFunction = function () : int {
 			return 666;
@@ -116,12 +114,14 @@ class ConsumerTest extends DjTestCase
 
 
 	/**
+	 * @param AMQPChannel $channel
 	 * @return Connection|MockInterface
 	 */
-	private function mockConnection() : Connection
+	private function mockConnection(AMQPChannel $channel) : Connection
 	{
 		$mock = \Mockery::mock(Connection::class);
 		$mock->makePartial();
+		$mock->shouldReceive('channel')->andReturn($channel);
 
 		return $mock;
 	}

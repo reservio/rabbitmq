@@ -317,7 +317,7 @@ class Consumer extends AmqpMember
 
 	protected function setupConsumer() : void
 	{
-		if ($this->autoSetupFabric) {
+		if ($this->isAutoSetupFabric()) {
 			$this->setupFabric();
 		}
 

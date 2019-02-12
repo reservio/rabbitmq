@@ -104,7 +104,7 @@ class Producer extends AmqpMember implements IProducer
 	 */
 	public function publish(string $msgBody, string $routingKey = '', array $additionalProperties = []) : void
 	{
-		if ($this->autoSetupFabric) {
+		if ($this->isAutoSetupFabric()) {
 			$this->setupFabric();
 		}
 

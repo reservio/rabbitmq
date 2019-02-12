@@ -16,17 +16,17 @@ abstract class AmqpMember
 	/**
 	 * @var Connection
 	 */
-	protected $connection;
+	private $connection;
 
 	/**
 	 * @var AMQPChannel
 	 */
-	protected $channel;
+	private $channel;
 
 	/**
 	 * @var bool
 	 */
-	protected $autoSetupFabric = TRUE;
+	private $autoSetupFabric = TRUE;
 
 
 
@@ -61,16 +61,16 @@ abstract class AmqpMember
 
 
 
-	public function setChannel(AMQPChannel $channel) : void
+	public function disableAutoSetupFabric() : void
 	{
-		$this->channel = $channel;
+		$this->autoSetupFabric = FALSE;
 	}
 
 
 
-	public function disableAutoSetupFabric() : void
+	public function isAutoSetupFabric() : bool
 	{
-		$this->autoSetupFabric = FALSE;
+		return $this->autoSetupFabric;
 	}
 
 }
