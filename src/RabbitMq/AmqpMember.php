@@ -5,7 +5,6 @@ namespace Damejidlo\RabbitMq;
 
 use Nette;
 use PhpAmqpLib\Channel\AMQPChannel;
-use PhpAmqpLib\Message\AMQPMessage;
 
 
 
@@ -33,14 +32,6 @@ abstract class AmqpMember
 	 * @var bool
 	 */
 	protected $autoSetupFabric = TRUE;
-
-	/**
-	 * @var mixed[]
-	 */
-	protected $basicProperties = [
-		'content_type' => 'text/plain',
-		'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
-	];
 
 	/**
 	 * @var mixed[]
