@@ -8,7 +8,6 @@ use Damejidlo\RabbitMq\Command\PurgeConsumerCommand;
 use Damejidlo\RabbitMq\Command\SetupFabricCommand;
 use Damejidlo\RabbitMq\Connection;
 use Damejidlo\RabbitMq\Consumer;
-use Damejidlo\RabbitMq\IProducer;
 use Damejidlo\RabbitMq\Producer;
 use Kdyby\Console\DI\ConsoleExtension;
 use Nette;
@@ -123,11 +122,6 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 	 */
 	private $connectionsMeta = [];
 
-	/**
-	 * @var mixed[]
-	 */
-	private $producersConfig = [];
-
 
 
 	public function __construct(bool $debugMode = FALSE)
@@ -230,26 +224,37 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 				throw new AssertionException("Connection {$config['connection']} required in producer {$this->name}.{$name} was not defined.");
 			}
 
+			$config['exchange'] = $this->validateConfig($this->exchangeDefaults, $config['exchange'], "{$this->name}.producers.{$name}.exchange");
+
+			Validators::assertField($config['exchange'], 'name', 'string:3..', "The config item 'exchange.%' of producer {$this->name}.{$name}");
+			$exchangeName = $config['exchange']['name'];
+			unset($config['exchange']['name']);
+
+			Validators::assertField($config['exchange'], 'type', 'string:3..', "The config item 'exchange.%' of producer {$this->name}.{$name}");
+			$exchangeType = $config['exchange']['type'];
+			unset($config['exchange']['type']);
+
+
 			$serviceName = $this->prefix('producer.' . $name);
 			$producer = $builder->addDefinition($serviceName)
-				->setFactory($config['class'], ['@' . $this->connectionsMeta[$config['connection']]['serviceId']])
-				->setClass(IProducer::class)
+				->setClass(Producer::class)
+				->setFactory($config['class'])
+				->setArguments([
+					'connection' => '@' . $this->connectionsMeta[$config['connection']]['serviceId'],
+					'exchangeName' => $exchangeName,
+					'exchangeType' => $exchangeType,
+					'routingKey' => $config['routingKey'],
+					'exchangeOptions' => $config['exchange'],
+				])
 				->addSetup('setContentType', [$config['contentType']])
 				->addSetup('setDeliveryMode', [$config['deliveryMode']])
-				->addSetup('setRoutingKey', [$config['routingKey']])
 				->addTag(self::TAG_PRODUCER);
-
-			$config['exchange'] = $this->validateConfig($this->exchangeDefaults, $config['exchange'], "{$this->name}.producers.{$name}.exchange");
-			Validators::assertField($config['exchange'], 'name', 'string:3..', "The config item 'exchange.%' of producer {$this->name}.{$name}");
-			Validators::assertField($config['exchange'], 'type', 'string:3..', "The config item 'exchange.%' of producer {$this->name}.{$name}");
-			$producer->addSetup('setExchangeOptions', [$config['exchange']]);
 
 			if ($config['autoSetupFabric'] === FALSE) {
 				$producer->addSetup('disableAutoSetupFabric');
 			}
 
 			$this->connectionsMeta[$config['connection']]['producers'][$name] = $serviceName;
-			$this->producersConfig[$name] = $config;
 		}
 	}
 

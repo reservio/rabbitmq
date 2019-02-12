@@ -37,13 +37,13 @@ class Connection extends AMQPLazyConnection
 
 
 
-	public function getProducer(string $name) : IProducer
+	public function getProducer(string $name) : Producer
 	{
 		if (!isset($this->serviceMap['producer'][$name])) {
 			throw new \InvalidArgumentException("Unknown producer {$name}");
 		}
 
-		/** @var IProducer $producer */
+		/** @var Producer $producer */
 		$producer = $this->serviceLocator->getService($this->serviceMap['producer'][$name]);
 
 		return $producer;

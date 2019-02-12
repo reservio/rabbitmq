@@ -10,6 +10,31 @@ use PhpAmqpLib\Message\AMQPMessage;
 class Producer extends AmqpMember implements IProducer
 {
 
+	public const DEFAULT_EXCHANGE_OPTIONS = [
+		'passive' => FALSE,
+		'durable' => TRUE,
+		'autoDelete' => FALSE,
+		'internal' => FALSE,
+		'nowait' => FALSE,
+		'arguments' => NULL,
+		'ticket' => NULL,
+	];
+
+	/**
+	 * @var string
+	 */
+	protected $exchangeName;
+
+	/**
+	 * @var string
+	 */
+	protected $exchangeType;
+
+	/**
+	 * @var string
+	 */
+	protected $routingKey = '';
+
 	/**
 	 * @var string
 	 */
@@ -21,28 +46,32 @@ class Producer extends AmqpMember implements IProducer
 	protected $deliveryMode = AMQPMessage::DELIVERY_MODE_PERSISTENT;
 
 	/**
-	 * @var string
-	 */
-	protected $routingKey = '';
-
-	/**
 	 * @var mixed[]
 	 */
-	protected $exchangeOptions = [
-		'name' => NULL,
-		'passive' => FALSE,
-		'durable' => TRUE,
-		'autoDelete' => FALSE,
-		'internal' => FALSE,
-		'nowait' => FALSE,
-		'arguments' => NULL,
-		'ticket' => NULL,
-	];
+	protected $exchangeOptions;
 
 	/**
 	 * @var bool
 	 */
 	protected $exchangeDeclared = FALSE;
+
+
+
+	/**
+	 * @param Connection $connection
+	 * @param string $exchangeName
+	 * @param string $exchangeType
+	 * @param string $routingKey
+	 * @param mixed[] $exchangeOptions
+	 */
+	public function __construct(Connection $connection, string $exchangeName, string $exchangeType, string $routingKey = '', array $exchangeOptions = [])
+	{
+		parent::__construct($connection);
+		$this->exchangeName = $exchangeName;
+		$this->exchangeType = $exchangeType;
+		$this->routingKey = $routingKey;
+		$this->exchangeOptions = $exchangeOptions + self::DEFAULT_EXCHANGE_OPTIONS;
+	}
 
 
 
@@ -60,37 +89,24 @@ class Producer extends AmqpMember implements IProducer
 
 
 
-	public function setRoutingKey(string $routingKey) : void
+	public function setupFabric() : void
 	{
-		$this->routingKey = $routingKey;
-	}
-
-
-
-	/**
-	 * @param  mixed[] $options
-	 */
-	public function setExchangeOptions(array $options = []) : void
-	{
-		if (!isset($options['name'])) {
-			throw new \InvalidArgumentException('You must provide an exchange name');
+		if ($this->exchangeDeclared) {
+			return;
 		}
 
-		if (empty($options['type'])) {
-			throw new \InvalidArgumentException('You must provide an exchange type');
-		}
+		$this->getChannel()->exchange_declare(
+			$this->exchangeName,
+			$this->exchangeType,
+			$this->exchangeOptions['passive'],
+			$this->exchangeOptions['durable'],
+			$this->exchangeOptions['autoDelete'],
+			$this->exchangeOptions['internal'],
+			$this->exchangeOptions['nowait'],
+			$this->exchangeOptions['arguments'],
+			$this->exchangeOptions['ticket']);
 
-		$this->exchangeOptions = $options + $this->exchangeOptions;
-	}
-
-
-
-	/**
-	 * @return mixed[]
-	 */
-	public function getExchangeOptions() : array
-	{
-		return $this->exchangeOptions;
+		$this->exchangeDeclared = TRUE;
 	}
 
 
@@ -113,7 +129,7 @@ class Producer extends AmqpMember implements IProducer
 		}
 
 		$message = new AMQPMessage($msgBody, array_merge($this->getBasicProperties(), $additionalProperties));
-		$this->getChannel()->basic_publish($message, $this->exchangeOptions['name'], $routingKey);
+		$this->getChannel()->basic_publish($message, $this->exchangeName, $routingKey);
 	}
 
 
@@ -124,37 +140,6 @@ class Producer extends AmqpMember implements IProducer
 	protected function getBasicProperties() : array
 	{
 		return ['content_type' => $this->contentType, 'delivery_mode' => $this->deliveryMode];
-	}
-
-
-
-	public function setupFabric() : void
-	{
-		if (!$this->exchangeDeclared) {
-			$this->exchangeDeclare();
-		}
-	}
-
-
-
-	protected function exchangeDeclare() : void
-	{
-		if (empty($this->exchangeOptions['name'])) {
-			return;
-		}
-
-		$this->getChannel()->exchange_declare(
-			$this->exchangeOptions['name'],
-			$this->exchangeOptions['type'],
-			$this->exchangeOptions['passive'],
-			$this->exchangeOptions['durable'],
-			$this->exchangeOptions['autoDelete'],
-			$this->exchangeOptions['internal'],
-			$this->exchangeOptions['nowait'],
-			$this->exchangeOptions['arguments'],
-			$this->exchangeOptions['ticket']);
-
-		$this->exchangeDeclared = TRUE;
 	}
 
 }
