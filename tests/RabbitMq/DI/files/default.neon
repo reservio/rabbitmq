@@ -39,16 +39,9 @@ rabbitmq:
 	consumers:
 		foo_consumer:
 			connection: foo_connection
-			exchange:
-				name: foo_exchange
-				type: direct
-				passive: true
-				durable: true
-				autoDelete: true
-				internal: true
-				nowait: true
-				arguments: null
-				ticket: null
+			binding:
+				- {exchange: foo_exchange, routingKey: 'android.#.upload'}
+				- {exchange: foo_exchange, routingKey: 'iphone.upload'}
 			queue:
 				name: foo_queue
 				passive: true
@@ -58,21 +51,19 @@ rabbitmq:
 				nowait: true
 				arguments: null
 				ticket: null
-				routing_keys:
-					- 'android.#.upload'
-					- 'iphone.upload'
 			callback: DamejidloTests\RabbitMq\Callback()
 
-		default_consumer < default_producer:
+		default_consumer:
 			queue:
 				name: default_queue
 			callback: [DamejidloTests\RabbitMq\Callback, staticProcess]
+			binding:
+				- {exchange: default_consumer}
 
 		qos_test_consumer:
 			connection: foo_connection
-			exchange:
-				name: foo_exchange
-				type: direct
+			binding:
+				- {exchange: foo_exchange}
 			queue:
 				name: foo_queue
 			qos:

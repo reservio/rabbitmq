@@ -43,9 +43,10 @@ rabbitmq:
 	consumers:
 		uploadPicture:
 			connection: default
-			exchange: {name: 'upload-picture', type: direct}
 			queue: {name: 'upload-picture'}
 			callback: [@MyApp\UploadPictureService, processUpload]
+			binding:
+				- {exchange: 'upload-picture', routingKey: ''}
 ```
 
 Here we configure the connection service and the message endpoints that our application will have. Connection configured like this will be automatically named `default`.
@@ -94,14 +95,14 @@ The argument value must be a list of datatype and value. Valid datatypes are:
 
 Adapt the `arguments` according to your needs.
 
-If you want to bind queue with specific routing keys you can declare it in producer or consumer config:
+If you want to bind queue with specific routing keys you can declare it in consumer config:
 
 ```yaml
 queue:
 	name: "upload-picture"
-	routing_keys:
-	  - 'android.#.upload'
-	  - 'iphone.upload'
+	binding:
+	  - {exchange: 'upload-picture-foo', routingKey: 'android.#.upload'}
+	  - {exchange: 'upload-picture-bar', routingKey: 'iphone.upload'}
 ```
 
 
@@ -198,9 +199,10 @@ Let's review the consumer configuration from above:
 	...
 	consumers:
 		uploadPicture:
-			exchange: {name: 'upload-picture', type: direct}
 			queue: {name: 'upload-picture'}
 			callback: [@MyApp\UploadPictureService, processUpload]
+			binding:
+				- {exchange: 'upload-picture'}
 	...
 ```
 
@@ -209,8 +211,8 @@ When the consumer gets a message from the server it will execute the callback.
 If for testing or debugging purposes you need to specify a different callback, then you can change it there.
 The callback service must return a valid response flag (see the constants on `IConsumer`) and should implement the marker interface `IConsumer` (it's optional).
 
-The remaining options are the `exchange` and the `queue`.
-The `exchange` options should be the same ones as those used for the `producer`.
+The remaining options are the `binding` and the `queue`.
+The `binding` options define the binding of the queue to exchanges, with optional routing key.
 In the `queue` options we will provide a **queue name**. Why?
 
 As we said, messages in AMQP are published to an `exchange`. This doesn't mean the message has reached a `queue`.

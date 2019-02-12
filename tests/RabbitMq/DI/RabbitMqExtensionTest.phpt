@@ -44,17 +44,6 @@ class RabbitMqExtensionTest extends DjTestCase
 
 
 
-	public function testExtendingConsumerFromProducer() : void
-	{
-		$container = $this->createContainer();
-
-		/** @var Consumer $defaultConsumer */
-		$defaultConsumer = $container->getService('rabbitmq.consumer.default_consumer');
-		Assert::same('default_exchange', $defaultConsumer->getExchangeOptions()['name']);
-	}
-
-
-
 	private function createContainer() : Container
 	{
 		$config = new Configurator();

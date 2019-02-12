@@ -72,6 +72,11 @@ abstract class AmqpMember
 	 */
 	protected $queueDeclared = FALSE;
 
+	/**
+	 * @var string[][]
+	 */
+	protected $binding = [];
+
 
 
 	public function __construct(Connection $connection)
@@ -160,6 +165,13 @@ abstract class AmqpMember
 
 
 
+	public function addBinding(string $exchange, string $routingKey = '') : void
+	{
+		$this->binding[$exchange][] = $routingKey;
+	}
+
+
+
 	public function setRoutingKey(string $routingKey) : void
 	{
 		$this->routingKey = $routingKey;
@@ -238,14 +250,9 @@ abstract class AmqpMember
 			$options['ticket']
 		);
 
-		if (empty($options['routing_keys'])) {
-			if (!empty($this->exchangeOptions['name'])) {
-				$this->getChannel()->queue_bind($queueName, $this->exchangeOptions['name'], $this->routingKey);
-			}
-
-		} else {
-			foreach ($options['routing_keys'] as $routingKey) {
-				$this->getChannel()->queue_bind($queueName, $this->exchangeOptions['name'], $routingKey);
+		foreach ($this->binding as $exchangeName => $routingKeys) {
+			foreach ($routingKeys as $routingKey) {
+				$this->getChannel()->queue_bind($queueName, $exchangeName, $routingKey);
 			}
 		}
 	}

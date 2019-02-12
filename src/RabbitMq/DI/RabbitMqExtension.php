@@ -12,7 +12,6 @@ use Damejidlo\RabbitMq\IProducer;
 use Damejidlo\RabbitMq\Producer;
 use Kdyby\Console\DI\ConsoleExtension;
 use Nette;
-use Nette\DI\Config\Helpers;
 use Nette\Utils\AssertionException;
 use Nette\Utils\Validators;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -64,9 +63,9 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 	 */
 	public $consumerDefaults = [
 		'connection' => 'default',
-		'exchange' => [],
 		'queue' => [],
 		'callback' => NULL,
+		'binding' => [],
 		'qos' => [],
 		'idleTimeout' => NULL,
 		'autoSetupFabric' => NULL, // inherits from `rabbitmq: autoSetupFabric:`
@@ -91,7 +90,7 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 	 * @var mixed[]
 	 */
 	public $queueDefaults = [
-		'name' => '',
+		'name' => NULL,
 		'passive' => FALSE,
 		'durable' => TRUE,
 		'noLocal' => FALSE,
@@ -101,7 +100,6 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 		'nowait' => FALSE,
 		'arguments' => NULL,
 		'ticket' => NULL,
-		'routing_keys' => [],
 	];
 
 	/**
@@ -110,6 +108,14 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 	public $qosDefaults = [
 		'prefetchSize' => 0,
 		'prefetchCount' => 0,
+	];
+
+	/**
+	 * @var mixed
+	 */
+	public $bindingDefaults = [
+		'exchange' => NULL,
+		'routingKey' => '',
 	];
 
 	/**
@@ -260,7 +266,6 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 		$builder = $this->getContainerBuilder();
 		foreach ($consumers as $name => $config) {
 			$config = $this->validateConfig($consumerDefaults, $config, "{$this->name}.consumers.{$name}");
-			$config = $this->extendConsumerFromProducer($name, $config);
 
 			if (!isset($this->connectionsMeta[$config['connection']])) {
 				throw new AssertionException("Connection {$config['connection']} required in consumer {$this->name}.{$name} was not defined.");
@@ -271,20 +276,17 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 				->addTag(self::TAG_CONSUMER)
 				->setAutowired(FALSE);
 
-			if (!empty($config['exchange'])) {
-				$config['exchange'] = $this->validateConfig($this->exchangeDefaults, $config['exchange'], "{$this->name}.consumers.{$name}.exchange");
-				Validators::assertField($config['exchange'], 'name', 'string:3..', "The config item 'exchange.%' of consumer {$this->name}.{$name}");
-				Validators::assertField($config['exchange'], 'type', 'string:3..', "The config item 'exchange.%' of consumer {$this->name}.{$name}");
-				$consumer->addSetup('setExchangeOptions', [$config['exchange']]);
-			}
+			$config['queue'] = $this->validateConfig($this->queueDefaults, $config['queue'], "{$this->name}.consumers.{$name}.queue");
+			$consumer
+				->setClass(Consumer::class)
+				->addSetup('setQueueOptions', [$config['queue']])
+				->addSetup('setCallback', [$this->fixCallback($config['callback'])]);
 
-			if (!empty($config['queue'])) {
-				$config['queue'] = $this->validateConfig($this->queueDefaults, $config['queue'], "{$this->name}.consumers.{$name}.queue");
-				$consumer
-					->setClass(Consumer::class)
-					->addSetup('setQueueOptions', [$config['queue']])
-					->addSetup('setCallback', [$this->fixCallback($config['callback'])]);
-
+			Validators::assert($config['binding'], 'array[]', "The config item 'binding.%' of consumer {$this->name}.{$name}");
+			foreach ($config['binding'] as $i => $binding) {
+				$binding = $this->validateConfig($this->bindingDefaults, $binding);
+				Validators::assertField($binding, 'exchange', 'string:3..', "The config item 'binding[$i].%' of consumer {$this->name}.{$name}");
+				$consumer->addSetup('addBinding', $binding);
 			}
 
 			$consumer->setArguments(['@' . $this->connectionsMeta[$config['connection']]['serviceId']]);
@@ -305,36 +307,6 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 
 			$this->connectionsMeta[$config['connection']]['consumers'][$name] = $serviceName;
 		}
-	}
-
-
-
-	/**
-	 * @param string $consumerName
-	 * @param mixed[] $config
-	 * @return mixed[]
-	 */
-	private function extendConsumerFromProducer(string $consumerName, array $config) : array
-	{
-		if (!isset($config[Helpers::EXTENDS_KEY])) {
-			return $config;
-		}
-		$producerName = $config[Helpers::EXTENDS_KEY];
-
-		if (!isset($this->producersConfig[$producerName])) {
-			throw new AssertionException("Consumer {$this->name}.{$consumerName} cannot extend unknown producer {$this->name}.{$producerName}.");
-		}
-		$producerConfig = $this->producersConfig[$producerName];
-
-		if (!empty($producerConfig['exchange'])) {
-			$config['exchange'] = Helpers::merge($config['exchange'], $producerConfig['exchange']);
-		}
-
-		if (!empty($producerConfig['queue'])) {
-			$config['queue'] = Helpers::merge($config['queue'], $producerConfig['queue']);
-		}
-
-		return $config;
 	}
 
 
