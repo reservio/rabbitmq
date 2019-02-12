@@ -37,10 +37,6 @@ abstract class AmqpMember
 		if ($this->channel !== NULL) {
 			$this->channel->close();
 		}
-
-		if ($this->connection->isConnected()) {
-			$this->connection->close();
-		}
 	}
 
 
