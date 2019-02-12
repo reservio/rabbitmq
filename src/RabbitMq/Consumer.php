@@ -58,6 +58,11 @@ class Consumer extends AmqpMember
 	public $onError = [];
 
 	/**
+	 * @var string
+	 */
+	protected $consumerTag;
+
+	/**
 	 * @var mixed[]
 	 */
 	protected $qosOptions = [
@@ -103,6 +108,14 @@ class Consumer extends AmqpMember
 
 
 
+	public function __construct(Connection $connection, string $consumerTag = '')
+	{
+		parent::__construct($connection);
+		$this->consumerTag = $consumerTag === '' ? sprintf("PHPPROCESS_%s_%s", gethostname(), getmypid()) : $consumerTag;
+	}
+
+
+
 	public function setQosOptions(int $prefetchSize = 0, int $prefetchCount = 0, bool $global = FALSE) : void
 	{
 		$this->qosOptions = [
@@ -145,13 +158,6 @@ class Consumer extends AmqpMember
 	public function getIdleTimeout() : int
 	{
 		return $this->idleTimeout;
-	}
-
-
-
-	public function setConsumerTag(string $tag) : void
-	{
-		$this->consumerTag = $tag;
 	}
 
 

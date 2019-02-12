@@ -27,11 +27,6 @@ abstract class AmqpMember
 	/**
 	 * @var string
 	 */
-	protected $consumerTag;
-
-	/**
-	 * @var string
-	 */
 	protected $routingKey = '';
 
 	/**
@@ -89,10 +84,9 @@ abstract class AmqpMember
 
 
 
-	public function __construct(Connection $connection, string $consumerTag = '')
+	public function __construct(Connection $connection)
 	{
 		$this->connection = $connection;
-		$this->consumerTag = $consumerTag === '' ? sprintf("PHPPROCESS_%s_%s", gethostname(), getmypid()) : $consumerTag;
 	}
 
 
