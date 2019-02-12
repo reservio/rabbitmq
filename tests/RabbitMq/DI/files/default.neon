@@ -4,21 +4,14 @@ extensions:
 
 rabbitmq:
 	connection:
-		foo_connection:
-			host: 127.0.0.1
-			port: 5672
-			user: guest
-			password: guest
-			vhost: '/'
-
-		default:
-			user: guest
-			password: guest
-
+		host: 127.0.0.1
+		port: 5672
+		user: guest
+		password: guest
+		vhost: '/'
 
 	producers:
 		foo_producer:
-			connection: foo_connection
 			exchange:
 				name: foo_exchange
 				type: direct
@@ -38,7 +31,6 @@ rabbitmq:
 
 	consumers:
 		foo_consumer:
-			connection: foo_connection
 			binding:
 				- {exchange: foo_exchange, routingKey: 'android.#.upload'}
 				- {exchange: foo_exchange, routingKey: 'iphone.upload'}
@@ -61,7 +53,6 @@ rabbitmq:
 				- {exchange: default_consumer}
 
 		qos_test_consumer:
-			connection: foo_connection
 			binding:
 				- {exchange: foo_exchange}
 			queue:

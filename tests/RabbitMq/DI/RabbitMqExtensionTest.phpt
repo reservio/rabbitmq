@@ -9,7 +9,6 @@ use Damejidlo\RabbitMq\Producer;
 use DamejidloTests\DjTestCase;
 use Nette\Configurator;
 use Nette\DI\Container;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
 use Tester\Assert;
 
 require_once __DIR__ . '/../../bootstrap.php';
@@ -26,13 +25,7 @@ class RabbitMqExtensionTest extends DjTestCase
 	{
 		$container = $this->createContainer();
 
-		// foo was defined first in config
-		Assert::type(AMQPStreamConnection::class, $container->getByType(Connection::class));
-		Assert::same($container->getByType(Connection::class), $container->getService('rabbitmq.foo_connection.connection'));
-
-		// only the first defined connection is autowired
-		Assert::type(AMQPStreamConnection::class, $container->getService('rabbitmq.default.connection'));
-		Assert::notSame($container->getByType(Connection::class), $container->getService('rabbitmq.default.connection'));
+		Assert::same($container->getByType(Connection::class), $container->getService('rabbitmq.connection'));
 
 		Assert::type(Producer::class, $container->getService('rabbitmq.producer.foo_producer'));
 		Assert::type(Producer::class, $container->getService('rabbitmq.producer.default_producer'));

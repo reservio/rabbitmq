@@ -11,7 +11,6 @@ use Damejidlo\RabbitMq\Consumer;
 use Damejidlo\RabbitMq\Producer;
 use Kdyby\Console\DI\ConsoleExtension;
 use Nette;
-use Nette\Utils\AssertionException;
 use Nette\Utils\Validators;
 use PhpAmqpLib\Message\AMQPMessage;
 
@@ -117,11 +116,6 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 		'routingKey' => '',
 	];
 
-	/**
-	 * @var mixed[]
-	 */
-	private $connectionsMeta = [];
-
 
 
 	public function __construct(bool $debugMode = FALSE)
@@ -148,62 +142,35 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 			}
 		}
 
-		$this->loadConnections($this->config['connection']);
+		$this->loadConnection($this->config['connection']);
 		$this->loadProducers($this->config['producers']);
 		$this->loadConsumers($this->config['consumers']);
-
-		$builder = $this->getContainerBuilder();
-		foreach ($this->connectionsMeta as $name => $meta) {
-			$connection = $builder->getDefinition($meta['serviceId']);
-			$connection->addSetup('injectServiceLocator');
-			$connection->addSetup('injectServiceMap', [$meta['producers'], $meta['consumers']]);
-		}
-
 		$this->loadConsole();
 	}
 
 
 
 	/**
-	 * @param mixed[] $connections
+	 * @param mixed[] $config
 	 */
-	private function loadConnections(array $connections) : void
+	private function loadConnection(array $config) : void
 	{
-		$this->connectionsMeta = []; // reset
-
-		if (isset($connections['user'])) {
-			$connections = ['default' => $connections];
-		}
-
 		$builder = $this->getContainerBuilder();
-		foreach ($connections as $name => $config) {
-			$config = $this->validateConfig($this->connectionDefaults, $config, "{$this->name}.connection.{$name}");
+		$config = $this->validateConfig($this->connectionDefaults, $config, "{$this->name}.connection");
 
-			Nette\Utils\Validators::assertField($config, 'user', 'string:3..', "The config item '%' of connection {$this->name}.{$name}");
-			Nette\Utils\Validators::assertField($config, 'password', 'string:3..', "The config item '%' of connection {$this->name}.{$name}");
+		Nette\Utils\Validators::assertField($config, 'user', 'string:3..', "The config item '%' of connection {$this->name}");
+		Nette\Utils\Validators::assertField($config, 'password', 'string:3..', "The config item '%' of connection {$this->name}");
 
-			$serviceName = $this->prefix($name . '.connection');
-			$connection = $builder->addDefinition($serviceName)
-				->setClass(Connection::class)
-				->setArguments([
-					$config['host'],
-					$config['port'],
-					$config['user'],
-					$config['password'],
-					$config['vhost'],
-				]);
-
-			$this->connectionsMeta[$name] = [
-				'serviceId' => $serviceName,
-				'producers' => [],
-				'consumers' => [],
-			];
-
-			// only the first connection is autowired
-			if (count($this->connectionsMeta) > 1) {
-				$connection->setAutowired(FALSE);
-			}
-		}
+		$builder->addDefinition($this->prefix('connection'))
+			->setClass(Connection::class)
+			->setArguments([
+				$config['host'],
+				$config['port'],
+				$config['user'],
+				$config['password'],
+				$config['vhost'],
+			])
+			->addSetup('injectServiceLocator');
 	}
 
 
@@ -213,16 +180,14 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 	 */
 	private function loadProducers(array $producers) : void
 	{
+		$producersMap = [];
+
 		$producerDefaults = $this->producerDefaults;
 		$producerDefaults['autoSetupFabric'] = $producerDefaults['autoSetupFabric'] ?? $this->config['autoSetupFabric'];
 
 		$builder = $this->getContainerBuilder();
 		foreach ($producers as $name => $config) {
 			$config = $this->validateConfig($producerDefaults, $config, "{$this->name}.producers.{$name}");
-
-			if (!isset($this->connectionsMeta[$config['connection']])) {
-				throw new AssertionException("Connection {$config['connection']} required in producer {$this->name}.{$name} was not defined.");
-			}
 
 			$config['exchange'] = $this->validateConfig($this->exchangeDefaults, $config['exchange'], "{$this->name}.producers.{$name}.exchange");
 
@@ -234,13 +199,12 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 			$exchangeType = $config['exchange']['type'];
 			unset($config['exchange']['type']);
 
-
 			$serviceName = $this->prefix('producer.' . $name);
 			$producer = $builder->addDefinition($serviceName)
 				->setClass(Producer::class)
 				->setFactory($config['class'])
 				->setArguments([
-					'connection' => '@' . $this->connectionsMeta[$config['connection']]['serviceId'],
+					'connection' => $this->prefix('@connection'),
 					'exchangeName' => $exchangeName,
 					'exchangeType' => $exchangeType,
 					'routingKey' => $config['routingKey'],
@@ -254,8 +218,11 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 				$producer->addSetup('disableAutoSetupFabric');
 			}
 
-			$this->connectionsMeta[$config['connection']]['producers'][$name] = $serviceName;
+			$producersMap[$name] = $serviceName;
 		}
+
+		$builder->getDefinition($this->prefix('connection'))
+			->addSetup('injectProducersMap', [$producersMap]);
 	}
 
 
@@ -265,16 +232,14 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 	 */
 	private function loadConsumers(array $consumers) : void
 	{
+		$consumersMap = [];
+
 		$consumerDefaults = $this->consumerDefaults;
 		$consumerDefaults['autoSetupFabric'] = $consumerDefaults['autoSetupFabric'] ?? $this->config['autoSetupFabric'];
 
 		$builder = $this->getContainerBuilder();
 		foreach ($consumers as $name => $config) {
 			$config = $this->validateConfig($consumerDefaults, $config, "{$this->name}.consumers.{$name}");
-
-			if (!isset($this->connectionsMeta[$config['connection']])) {
-				throw new AssertionException("Connection {$config['connection']} required in consumer {$this->name}.{$name} was not defined.");
-			}
 
 			$config['queue'] = $this->validateConfig($this->queueDefaults, $config['queue'], "{$this->name}.consumers.{$name}.queue");
 
@@ -288,7 +253,7 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 			$consumer = $builder->addDefinition($serviceName)
 				->setClass(Consumer::class)
 				->setArguments([
-					'connection' => '@' . $this->connectionsMeta[$config['connection']]['serviceId'],
+					'connection' => $this->prefix('@connection'),
 					'queueName' => $queueName,
 					'callback' => $this->fixCallback($config['callback']),
 					'queueOptions' => $config['queue'],
@@ -313,8 +278,11 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 				$consumer->addSetup('disableAutoSetupFabric');
 			}
 
-			$this->connectionsMeta[$config['connection']]['consumers'][$name] = $serviceName;
+			$consumersMap[$name] = $serviceName;
 		}
+
+		$builder->getDefinition($this->prefix('connection'))
+			->addSetup('injectConsumersMap', [$consumersMap]);
 	}
 
 

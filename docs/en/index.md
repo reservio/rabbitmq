@@ -55,23 +55,6 @@ For the connection, required is only `user` and `password`, others are optional,
 In this example your service container will contain the service `rabbitmq.producer.uploadPicture` and `rabbitmq.consumer.uploadPicture`.
 The later expects that there's a service of type `App\UploadPictureService` with method `processUpload`, that accepts the `AMQPMessage`.
 
-You can also define multiple connections, you just have to name them.
-And if you don't specify a connection for the client, the client will not look for the connection named `default`, but for the _first defined_ connection.
-
-```yaml
-rabbitmq:
-	connection:
-		foo: # this connection is defined as first, so it's "the default" for all application clients
-			host: the_other_server.com
-			port: 5672
-			user: 'bar'
-			password: 'secret'
-
-		default:
-			user: 'guest'
-			password: 'secret'
-```
-
 If you need to add optional queue arguments, then your queue options can be something like this:
 
 ```yaml
