@@ -19,7 +19,7 @@ jobs:
         install:
           - travis_retry composer update --no-interaction --optimize-autoloader --prefer-dist
         script:
-          - vendor/bin/phpcs --standard=vendor/damejidlo/coding-standard/DameJidloCodingStandard/ruleset.xml --ignore=tests/tmp/* -s src tests
+          - vendor/bin/phpcs
 
 install:
   - travis_retry composer update --no-interaction --optimize-autoloader --prefer-dist $COMPOSER_ARGS

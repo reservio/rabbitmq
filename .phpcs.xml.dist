@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<ruleset>
+    <config name="installed_paths" value="../../damejidlo/coding-standard/DameJidloCodingStandard"/><!-- relative path from PHPCS source location -->
+
+    <arg value="ps"/><!-- show progress of the run, show sniff names -->
+    <arg name="cache" value=".phpcs-cache"/>
+
+    <arg name="extensions" value="php,phpt"/>
+    <file>src</file>
+    <file>tests</file>
+
+    <rule ref="DameJidloCodingStandard">
+    </rule>
+
+    <!-- special settings for tests and bootstrap -->
+    <exclude-pattern>*/tests/tmp/*</exclude-pattern>
+</ruleset>
