@@ -50,4 +50,15 @@ abstract class AmqpMember
 		return $this->channel;
 	}
 
+
+
+	/**
+	 * @internal
+	 * @param AMQPChannel $channel
+	 */
+	public function setChannel(AMQPChannel $channel) : void
+	{
+		$this->channel = $channel;
+	}
+
 }

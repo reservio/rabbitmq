@@ -230,7 +230,19 @@ If you want to establish a consumer memory limit, you can do it by using flag `-
 In the following example, this flag adds 256 MB memory limit. Consumer will be stopped five MB before reaching 256MB in order to avoid a PHP Allowed memory size error.
 
 ```bash
-$ php www/index.php rabbitmq:consumer -l 256
+$ php www/index.php rabbitmq:consumer -l 256 uploadPicture
+```
+
+If you need to set a timeout when there are no messages from your queue during a period of time, you can set the idle timeout in seconds:
+
+```bash
+$ php www/index.php rabbitmq:consumer -t 60 uploadPicture
+```
+
+You can also start a process consuming multiple queues.
+
+```bash
+$ php www/index.php rabbitmq:consumer fistConsumerName secondConsumerName thirdConsumerName
 ```
 
 If you want to remove all the messages awaiting in a queue, you can execute this command to purge this queue:
@@ -239,17 +251,6 @@ If you want to remove all the messages awaiting in a queue, you can execute this
 $ php www/index.php rabbitmq:purge --no-confirmation uploadPicture
 ```
 
-#### Idle timeout
-
-If you need to set a timeout when there are no messages from your queue during a period of time, you can set the `idleTimeout` in seconds:
-
-```yaml
-	...
-	consumers:
-		uploadPicture:
-			idleTimeout: 60
-	...
-```
 
 #### Fair dispatching
 

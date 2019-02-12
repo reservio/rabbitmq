@@ -5,6 +5,7 @@ namespace DamejidloTests\RabbitMq\DI;
 
 use Damejidlo\RabbitMq\Connection;
 use Damejidlo\RabbitMq\Consumer;
+use Damejidlo\RabbitMq\IConsumerRunnerFactory;
 use Damejidlo\RabbitMq\Producer;
 use DamejidloTests\DjTestCase;
 use Nette\Configurator;
@@ -26,6 +27,8 @@ class RabbitMqExtensionTest extends DjTestCase
 		$container = $this->createContainer();
 
 		Assert::same($container->getByType(Connection::class), $container->getService('rabbitmq.connection'));
+
+		Assert::type(IConsumerRunnerFactory::class, $container->getService('rabbitmq.consumerRunnerFactory'));
 
 		Assert::type(Producer::class, $container->getService('rabbitmq.producer.foo_producer'));
 		Assert::type(Producer::class, $container->getService('rabbitmq.producer.default_producer'));

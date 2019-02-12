@@ -8,6 +8,7 @@ use Damejidlo\RabbitMq\Command\PurgeConsumerCommand;
 use Damejidlo\RabbitMq\Command\SetupFabricCommand;
 use Damejidlo\RabbitMq\Connection;
 use Damejidlo\RabbitMq\Consumer;
+use Damejidlo\RabbitMq\IConsumerRunnerFactory;
 use Damejidlo\RabbitMq\Producer;
 use Kdyby\Console\DI\ConsoleExtension;
 use Nette;
@@ -65,7 +66,6 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 		'callback' => NULL,
 		'binding' => [],
 		'qos' => [],
-		'idleTimeout' => NULL,
 		'autoSetupFabric' => NULL, // inherits from `rabbitmq: autoSetupFabric:`
 	];
 
@@ -223,6 +223,9 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 
 		$builder->getDefinition($this->prefix('connection'))
 			->addSetup('injectProducersMap', [$producersMap]);
+
+		$builder->addDefinition($this->prefix('consumerRunnerFactory'))
+			->setImplement(IConsumerRunnerFactory::class);
 	}
 
 
@@ -268,10 +271,6 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 				$binding = $this->validateConfig($this->bindingDefaults, $binding);
 				Validators::assertField($binding, 'exchange', 'string:3..', "The config item 'binding[$i].%' of consumer {$this->name}.{$name}");
 				$consumer->addSetup('addBinding', $binding);
-			}
-
-			if ($config['idleTimeout']) {
-				$consumer->addSetup('setIdleTimeout', [$config['idleTimeout']]);
 			}
 
 			if ($config['autoSetupFabric'] === FALSE) {

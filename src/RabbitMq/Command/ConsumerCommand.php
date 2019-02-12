@@ -4,7 +4,8 @@ declare(strict_types = 1);
 namespace Damejidlo\RabbitMq\Command;
 
 use Damejidlo\RabbitMq\Connection;
-use Damejidlo\RabbitMq\Consumer;
+use Damejidlo\RabbitMq\ConsumerRunner;
+use Damejidlo\RabbitMq\IConsumerRunnerFactory;
 use Nette\Utils\Validators;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -24,9 +25,15 @@ class ConsumerCommand extends Command
 	public $connection;
 
 	/**
-	 * @var Consumer
+	 * @inject
+	 * @var IConsumerRunnerFactory
 	 */
-	protected $consumer;
+	public $consumerRunnerFactory;
+
+	/**
+	 * @var ConsumerRunner
+	 */
+	protected $consumerRunner;
 
 	/**
 	 * @var int
@@ -39,9 +46,10 @@ class ConsumerCommand extends Command
 	{
 		$this
 			->setName('rabbitmq:consumer')
-			->setDescription('Starts a configured consumer')
-			->addArgument('name', InputArgument::REQUIRED, 'Consumer Name')
+			->setDescription('Starts configured consumers')
+			->addArgument('consumers', InputArgument::REQUIRED | InputArgument::IS_ARRAY, 'Consumer names')
 			->addOption('messages', 'm', InputOption::VALUE_OPTIONAL, 'Messages to consume', 0)
+			->addOption('idle-timeout', 't', InputOption::VALUE_OPTIONAL, 'Idle timeout in seconds', 0)
 			->addOption('memory-limit', 'l', InputOption::VALUE_OPTIONAL, 'Allowed memory for this process', NULL)
 			->addOption('debug', 'd', InputOption::VALUE_NONE, 'Enable Debugging')
 			->addOption('without-signals', 'w', InputOption::VALUE_NONE, 'Disable catching of system signals');
@@ -80,9 +88,16 @@ class ConsumerCommand extends Command
 		}
 		$this->amount = $amount;
 
-		/** @var string $consumerName */
-		$consumerName = $input->getArgument('name');
-		$this->consumer = $this->connection->getConsumer($consumerName);
+		/** @var string[] $consumerNames */
+		$consumerNames = $input->getArgument('consumers');
+		if ($consumerNames === []) {
+			throw new \InvalidArgumentException('At least one consumer name must be specified');
+		}
+
+		$this->consumerRunner = $this->consumerRunnerFactory->create();
+		foreach ($consumerNames as $consumerName) {
+			$this->consumerRunner->addConsumer($this->connection->getConsumer($consumerName));
+		}
 
 		/** @var string|int|NULL $memoryLimit */
 		$memoryLimit = $input->getOption('memory-limit');
@@ -92,18 +107,24 @@ class ConsumerCommand extends Command
 			if ($memoryLimit < 0) {
 				throw new \InvalidArgumentException("The -l option should be null or greater than 0");
 			}
-			if (!$this->consumer instanceof Consumer) {
-				throw new \UnexpectedValueException('Cannot set memory limit on consumer.');
-			}
-			$this->consumer->setMemoryLimit($memoryLimit);
+			$this->consumerRunner->setMemoryLimit($memoryLimit);
 		}
+
+		/** @var string|int $idleTimeout */
+		$idleTimeout = $input->getOption('idle-timeout');
+		Validators::assert($idleTimeout, 'numericint|null', 'idle-timeout option');
+		$idleTimeout = (int) $idleTimeout;
+		if ($idleTimeout < 0) {
+			throw new \InvalidArgumentException("The -t option should be null or greater than 0");
+		}
+		$this->consumerRunner->setIdleTimeout($idleTimeout);
 	}
 
 
 
 	protected function execute(InputInterface $input, OutputInterface $output) : int
 	{
-		$this->consumer->consume($this->amount);
+		$this->consumerRunner->consume($this->amount);
 		return 0;
 	}
 
@@ -114,9 +135,9 @@ class ConsumerCommand extends Command
 	 */
 	public function signalTerm() : void
 	{
-		if ($this->consumer) {
+		if ($this->consumerRunner) {
 			pcntl_signal(SIGTERM, SIG_DFL);
-			$this->consumer->forceStopConsumer();
+			$this->consumerRunner->forceStopConsumer();
 		}
 	}
 
@@ -127,9 +148,9 @@ class ConsumerCommand extends Command
 	 */
 	public function signalInt() : void
 	{
-		if ($this->consumer) {
+		if ($this->consumerRunner) {
 			pcntl_signal(SIGINT, SIG_DFL);
-			$this->consumer->forceStopConsumer();
+			$this->consumerRunner->forceStopConsumer();
 		}
 	}
 
@@ -140,9 +161,9 @@ class ConsumerCommand extends Command
 	 */
 	public function signalHup() : void
 	{
-		if ($this->consumer) {
+		if ($this->consumerRunner) {
 			pcntl_signal(SIGHUP, SIG_DFL);
-			$this->consumer->forceStopConsumer();
+			$this->consumerRunner->forceStopConsumer();
 		}
 	}
 
