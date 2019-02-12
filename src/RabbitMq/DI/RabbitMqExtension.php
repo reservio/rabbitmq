@@ -53,7 +53,6 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 		'connection' => 'default',
 		'class' => Producer::class,
 		'exchange' => [],
-		'queue' => [],
 		'contentType' => 'text/plain',
 		'deliveryMode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
 		'routingKey' => '',
@@ -86,7 +85,6 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 		'nowait' => FALSE,
 		'arguments' => NULL,
 		'ticket' => NULL,
-		'declare' => TRUE,
 	];
 
 	/**
@@ -235,15 +233,10 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 				->addSetup('setRoutingKey', [$config['routingKey']])
 				->addTag(self::TAG_PRODUCER);
 
-			if (!empty($config['exchange'])) {
-				$config['exchange'] = $this->validateConfig($this->exchangeDefaults, $config['exchange'], "{$this->name}.producers.{$name}.exchange");
-				Validators::assertField($config['exchange'], 'name', 'string:3..', "The config item 'exchange.%' of producer {$this->name}.{$name}");
-				Validators::assertField($config['exchange'], 'type', 'string:3..', "The config item 'exchange.%' of producer {$this->name}.{$name}");
-				$producer->addSetup('setExchangeOptions', [$config['exchange']]);
-			}
-
-			$config['queue'] = $this->validateConfig($this->queueDefaults, $config['queue'], "{$this->name}.producers.{$name}.queue");
-			$producer->addSetup('setQueueOptions', [$config['queue']]);
+			$config['exchange'] = $this->validateConfig($this->exchangeDefaults, $config['exchange'], "{$this->name}.producers.{$name}.exchange");
+			Validators::assertField($config['exchange'], 'name', 'string:3..', "The config item 'exchange.%' of producer {$this->name}.{$name}");
+			Validators::assertField($config['exchange'], 'type', 'string:3..', "The config item 'exchange.%' of producer {$this->name}.{$name}");
+			$producer->addSetup('setExchangeOptions', [$config['exchange']]);
 
 			if ($config['autoSetupFabric'] === FALSE) {
 				$producer->addSetup('disableAutoSetupFabric');

@@ -171,7 +171,7 @@ You can also configure these in the config
 	producers:
 		uploadPicture:
 			contentType: application/json
-			deliveryMode: 1
+			deliveryMode: PhpAmqpLib\Message\AMQPMessage::DELIVERY_MODE_NON_PERSISTENT
 	...
 ```
 

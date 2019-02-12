@@ -13,13 +13,6 @@ interface IProducer
 
 
 
-	/**
-	 * @param mixed[] $options
-	 */
-	public function setQueueOptions(array $options = []) : void;
-
-
-
 	public function setRoutingKey(string $routingKey) : void;
 
 

@@ -45,7 +45,6 @@ abstract class AmqpMember
 		'nowait' => FALSE,
 		'arguments' => NULL,
 		'ticket' => NULL,
-		'declare' => TRUE,
 	];
 
 	/**
@@ -190,7 +189,7 @@ abstract class AmqpMember
 
 	protected function exchangeDeclare() : void
 	{
-		if (empty($this->exchangeOptions['declare']) || empty($this->exchangeOptions['name'])) {
+		if (empty($this->exchangeOptions['name'])) {
 			return;
 		}
 
