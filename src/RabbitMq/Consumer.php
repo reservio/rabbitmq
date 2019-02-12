@@ -107,6 +107,31 @@ class Consumer extends AmqpMember
 	 */
 	protected $qosDeclared = FALSE;
 
+	/**
+	 * @var mixed[]
+	 */
+	protected $queueOptions = [
+		'name' => '',
+		'passive' => FALSE,
+		'durable' => TRUE,
+		'exclusive' => FALSE,
+		'autoDelete' => FALSE,
+		'nowait' => FALSE,
+		'arguments' => NULL,
+		'ticket' => NULL,
+		'routing_keys' => [],
+	];
+
+	/**
+	 * @var bool
+	 */
+	protected $queueDeclared = FALSE;
+
+	/**
+	 * @var string[][]
+	 */
+	protected $binding = [];
+
 
 
 	public function __construct(Connection $connection, string $consumerTag = '')
@@ -121,6 +146,33 @@ class Consumer extends AmqpMember
 	{
 		$this->prefetchSize = $prefetchSize;
 		$this->prefetchCount = $prefetchCount;
+	}
+
+
+
+	/**
+	 * @param mixed[] $options
+	 */
+	public function setQueueOptions(array $options = []) : void
+	{
+		$this->queueOptions = $options + $this->queueOptions;
+	}
+
+
+
+	/**
+	 * @return mixed[]
+	 */
+	public function getQueueOptions() : array
+	{
+		return $this->queueOptions;
+	}
+
+
+
+	public function addBinding(string $exchange, string $routingKey = '') : void
+	{
+		$this->binding[$exchange][] = $routingKey;
 	}
 
 
@@ -363,6 +415,53 @@ class Consumer extends AmqpMember
 		}
 
 		return memory_get_usage(TRUE) >= ($this->getMemoryLimit() * 1024 * 1024);
+	}
+
+
+
+	public function setupFabric() : void
+	{
+		if (!$this->queueDeclared) {
+			$this->queueDeclare();
+		}
+	}
+
+
+
+	protected function queueDeclare() : void
+	{
+		if (empty($this->queueOptions['name'])) {
+			return;
+		}
+
+		$this->doQueueDeclare($this->queueOptions['name'], $this->queueOptions);
+		$this->queueDeclared = TRUE;
+	}
+
+
+
+	/**
+	 * @param string $name
+	 * @param mixed[] $options
+	 */
+	protected function doQueueDeclare(string $name, array $options) : void
+	{
+		list($queueName, ,) = $this->getChannel()->queue_declare(
+			$name,
+			$options['passive'],
+			$options['durable'],
+			$options['exclusive'],
+			$options['autoDelete'],
+			$options['nowait'],
+			$options['arguments'],
+			$options['ticket']
+		);
+
+		foreach ($this->binding as $exchangeName => $routingKeys) {
+			foreach ($routingKeys as $routingKey) {
+				$this->getChannel()->queue_bind($queueName, $exchangeName, $routingKey);
+			}
+		}
 	}
 
 }

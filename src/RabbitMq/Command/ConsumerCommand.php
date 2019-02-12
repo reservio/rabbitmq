@@ -42,7 +42,6 @@ class ConsumerCommand extends Command
 			->setDescription('Starts a configured consumer')
 			->addArgument('name', InputArgument::REQUIRED, 'Consumer Name')
 			->addOption('messages', 'm', InputOption::VALUE_OPTIONAL, 'Messages to consume', 0)
-			->addOption('route', 'r', InputOption::VALUE_OPTIONAL, 'Routing Key', '')
 			->addOption('memory-limit', 'l', InputOption::VALUE_OPTIONAL, 'Allowed memory for this process', NULL)
 			->addOption('debug', 'd', InputOption::VALUE_NONE, 'Enable Debugging')
 			->addOption('without-signals', 'w', InputOption::VALUE_NONE, 'Disable catching of system signals');
@@ -97,12 +96,6 @@ class ConsumerCommand extends Command
 				throw new \UnexpectedValueException('Cannot set memory limit on consumer.');
 			}
 			$this->consumer->setMemoryLimit($memoryLimit);
-		}
-
-		/** @var string $routingKey */
-		$routingKey = $input->getOption('route');
-		if ($routingKey !== '') {
-			$this->consumer->setRoutingKey($routingKey);
 		}
 	}
 
