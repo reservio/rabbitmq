@@ -349,45 +349,6 @@ This seems to be quite a lot of work for just sending messages, let's recap to h
 And that's it!
 
 
-### Multiple Consumers
-
-It's a good practice to have a lot of queues for logic separation. With a simple consumer you will have to create one worker (consumer) per queue
-and it can be hard to manage when dealing with many evolutions (forget to add a line in your supervisord configuration?).
-This is also useful for small queues as you may not want to have as many workers as queues, and want to regroup some tasks together without losing flexibility and separation principle.
-
-Multiple consumers allow you to handle this use case by listening to multiple queues on the same consumer.
-Here is how you can set a consumer with multiple queues:
-
-```yaml
-	...
-	consumers:
-		upload:
-			exchange: {name: 'upload', type: direct}
-			queues:
-				upload-picture:
-					name: uploadPicture
-					callback: [@MyApp\MediaStorage, uploadPicture]
-					routing_keys:
-						- picture
-
-				upload-video:
-					name: upload_video
-					callback: [@MyApp\MediaStorage, uploadVideo]
-					routing_keys:
-						- video
-
-				upload-stats:
-					name: upload_stats
-					callback: [@MyApp\MediaStorage, uploadStats]
-	...
-```
-
-The callback is now specified under each queues and it's service should implement the `IConsumer` (it's optional).
-All the options of `queues` in the consumer are available for each queue.
-
-Be aware that all queues are under the same exchange, it's up to you to set the correct routing for callbacks.
-
-
 ## Other Commands
 
 ### Setting up the RabbitMQ fabric

@@ -5,7 +5,6 @@ namespace DamejidloTests\RabbitMq\DI;
 
 use Damejidlo\RabbitMq\Connection;
 use Damejidlo\RabbitMq\Consumer;
-use Damejidlo\RabbitMq\MultipleConsumer;
 use Damejidlo\RabbitMq\Producer;
 use DamejidloTests\DjTestCase;
 use Nette\Configurator;
@@ -41,7 +40,6 @@ class RabbitMqExtensionTest extends DjTestCase
 		Assert::type(Consumer::class, $container->getService('rabbitmq.consumer.foo_consumer'));
 		Assert::type(Consumer::class, $container->getService('rabbitmq.consumer.default_consumer'));
 		Assert::type(Consumer::class, $container->getService('rabbitmq.consumer.qos_test_consumer'));
-		Assert::type(MultipleConsumer::class, $container->getService('rabbitmq.consumer.multi_test_consumer'));
 	}
 
 

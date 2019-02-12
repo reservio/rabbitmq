@@ -9,7 +9,6 @@ use Damejidlo\RabbitMq\Command\SetupFabricCommand;
 use Damejidlo\RabbitMq\Connection;
 use Damejidlo\RabbitMq\Consumer;
 use Damejidlo\RabbitMq\IProducer;
-use Damejidlo\RabbitMq\MultipleConsumer;
 use Damejidlo\RabbitMq\Producer;
 use Kdyby\Console\DI\ConsoleExtension;
 use Nette;
@@ -67,8 +66,7 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 	public $consumerDefaults = [
 		'connection' => 'default',
 		'exchange' => [],
-		'queues' => [], // for multiple consumers
-		'queue' => [], // for single consumer
+		'queue' => [],
 		'callback' => NULL,
 		'qos' => [],
 		'idleTimeout' => NULL,
@@ -289,21 +287,7 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 				$consumer->addSetup('setExchangeOptions', [$config['exchange']]);
 			}
 
-			if (!empty($config['queues']) && empty($config['queue'])) {
-				foreach ($config['queues'] as $queueName => $queueConfig) {
-					$queueConfig['name'] = $queueName;
-					$config['queues'][$queueName] = Helpers::merge($queueConfig, $this->queueDefaults);
-
-					if (isset($queueConfig['callback'])) {
-						$config['queues'][$queueName]['callback'] = $this->fixCallback($queueConfig['callback']);
-					}
-				}
-
-				$consumer
-					->setClass(MultipleConsumer::class)
-					->addSetup('setQueues', [$config['queues']]);
-
-			} elseif (empty($config['queues']) && !empty($config['queue'])) {
+			if (!empty($config['queue'])) {
 				$consumer
 					->setClass(Consumer::class)
 					->addSetup('setQueueOptions', [Helpers::merge($config['queue'], $this->queueDefaults)])
@@ -357,7 +341,7 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 			$config['exchange'] = Helpers::merge($config['exchange'], $producerConfig['exchange']);
 		}
 
-		if (empty($config['queues']) && !empty($producerConfig['queue'])) {
+		if (!empty($producerConfig['queue'])) {
 			$config['queue'] = Helpers::merge($config['queue'], $producerConfig['queue']);
 		}
 

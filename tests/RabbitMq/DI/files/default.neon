@@ -81,29 +81,6 @@ rabbitmq:
 				global: true
 			callback: [@collecting_callback, process]
 
-		multi_test_consumer:
-			connection: foo_connection
-			exchange:
-				name: foo_multiple_exchange
-				type: direct
-			queues:
-				multi-test-1:
-					name: multi_test_1
-					callback: @DamejidloTests\RabbitMq\Callback::process
-				multi-test-2:
-					name: foo_bar_2
-					passive: true
-					durable: false
-					exclusive: true
-					autoDelete:  true
-					nowait: true
-					arguments: null
-					ticket: null
-					routing_keys:
-						- 'android.upload'
-						- 'iphone.upload'
-					callback: DamejidloTests\RabbitMq\Callback()
-
 
 services:
 	collecting_callback: DamejidloTests\RabbitMq\Callback
