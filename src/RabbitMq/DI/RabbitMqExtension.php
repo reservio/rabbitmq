@@ -180,6 +180,7 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 
 		$builder = $this->getContainerBuilder();
 		foreach ($connections as $name => $config) {
+			/** @var mixed[] $config */
 			$config = Helpers::merge($config, $this->connectionDefaults);
 
 			Nette\Utils\Validators::assertField($config, 'user', 'string:3..', "The config item '%' of connection {$this->name}.{$name}");
@@ -221,6 +222,7 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 
 		$builder = $this->getContainerBuilder();
 		foreach ($producers as $name => $config) {
+			/** @var mixed[] $config */
 			$config = Helpers::merge($config, $producerDefaults);
 
 			if (!isset($this->connectionsMeta[$config['connection']])) {
