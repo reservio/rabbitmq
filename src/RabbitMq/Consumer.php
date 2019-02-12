@@ -137,6 +137,11 @@ class Consumer extends AmqpMember
 	 */
 	protected $bindings = [];
 
+	/**
+	 * @var bool
+	 */
+	private $autoSetupFabric = TRUE;
+
 
 
 	/**
@@ -199,6 +204,20 @@ class Consumer extends AmqpMember
 	public function getIdleTimeout() : int
 	{
 		return $this->idleTimeout;
+	}
+
+
+
+	public function disableAutoSetupFabric() : void
+	{
+		$this->autoSetupFabric = FALSE;
+	}
+
+
+
+	public function isAutoSetupFabric() : bool
+	{
+		return $this->autoSetupFabric;
 	}
 
 

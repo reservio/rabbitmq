@@ -3,7 +3,7 @@ declare(strict_types = 1);
 
 namespace Damejidlo\RabbitMq;
 
-use Nette;
+use Nette\SmartObject;
 use PhpAmqpLib\Channel\AMQPChannel;
 
 
@@ -11,7 +11,7 @@ use PhpAmqpLib\Channel\AMQPChannel;
 abstract class AmqpMember
 {
 
-	use Nette\SmartObject;
+	use SmartObject;
 
 	/**
 	 * @var Connection
@@ -22,11 +22,6 @@ abstract class AmqpMember
 	 * @var AMQPChannel
 	 */
 	private $channel;
-
-	/**
-	 * @var bool
-	 */
-	private $autoSetupFabric = TRUE;
 
 
 
@@ -57,20 +52,6 @@ abstract class AmqpMember
 		}
 
 		return $this->channel;
-	}
-
-
-
-	public function disableAutoSetupFabric() : void
-	{
-		$this->autoSetupFabric = FALSE;
-	}
-
-
-
-	public function isAutoSetupFabric() : bool
-	{
-		return $this->autoSetupFabric;
 	}
 
 }

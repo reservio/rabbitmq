@@ -55,6 +55,11 @@ class Producer extends AmqpMember implements IProducer
 	 */
 	protected $exchangeDeclared = FALSE;
 
+	/**
+	 * @var bool
+	 */
+	private $autoSetupFabric = TRUE;
+
 
 
 	/**
@@ -85,6 +90,20 @@ class Producer extends AmqpMember implements IProducer
 	public function setDeliveryMode(int $deliveryMode) : void
 	{
 		$this->deliveryMode = $deliveryMode;
+	}
+
+
+
+	public function disableAutoSetupFabric() : void
+	{
+		$this->autoSetupFabric = FALSE;
+	}
+
+
+
+	public function isAutoSetupFabric() : bool
+	{
+		return $this->autoSetupFabric;
 	}
 
 
