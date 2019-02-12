@@ -24,9 +24,7 @@ rabbitmq:
 				ticket: null
 
 		default_producer:
-			exchange:
-				name: default_exchange
-				type: direct
+			exchange: default_exchange
 
 
 	consumers:
@@ -46,11 +44,10 @@ rabbitmq:
 			callback: DamejidloTests\RabbitMq\Callback()
 
 		default_consumer:
-			queue:
-				name: default_queue
+			queue: default_queue
 			callback: [DamejidloTests\RabbitMq\Callback, staticProcess]
 			binding:
-				- {exchange: default_consumer}
+				- {exchange: default_exchange}
 
 		qos_test_consumer:
 			binding:

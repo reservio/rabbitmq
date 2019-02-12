@@ -189,6 +189,9 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 		foreach ($producers as $name => $config) {
 			$config = $this->validateConfig($producerDefaults, $config, "{$this->name}.producers.{$name}");
 
+			if (!is_array($config['exchange'])) {
+				$config['exchange'] = ['name' => $config['exchange']];
+			}
 			$config['exchange'] = $this->validateConfig($this->exchangeDefaults, $config['exchange'], "{$this->name}.producers.{$name}.exchange");
 
 			Validators::assertField($config['exchange'], 'name', 'string:3..', "The config item 'exchange.%' of producer {$this->name}.{$name}");
@@ -244,6 +247,9 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 		foreach ($consumers as $name => $config) {
 			$config = $this->validateConfig($consumerDefaults, $config, "{$this->name}.consumers.{$name}");
 
+			if (!is_array($config['queue'])) {
+				$config['queue'] = ['name' => $config['queue']];
+			}
 			$config['queue'] = $this->validateConfig($this->queueDefaults, $config['queue'], "{$this->name}.consumers.{$name}.queue");
 
 			Validators::assertField($config['queue'], 'name', 'string:3..', "The config item 'queue.%' of consumer {$this->name}.{$name}");
