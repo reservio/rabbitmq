@@ -28,8 +28,8 @@ script:
   - vendor/bin/tester --info
   - vendor/bin/parallel-lint -e php,phpt --exclude vendor .
   - vendor/bin/tester tests/
-  - vendor/bin/phpstan analyse -l max -c tests/phpstan.src.neon src
-  - IS_PHPSTAN=1 vendor/bin/phpstan analyse -l max -c tests/phpstan.tests.neon tests
+  - vendor/bin/phpstan analyse
+  - IS_PHPSTAN=1 vendor/bin/phpstan analyse -c phpstan.tests.neon.dist
 
 after_failure:
   - for i in $(find tests -name \*.actual); do echo "--- $i"; cat $i; echo; echo; done

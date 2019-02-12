@@ -1,4 +1,8 @@
 parameters:
+	level: max
+	paths:
+		- %currentWorkingDirectory%/src
+
 	ignoreErrors:
 		- '#Parameter \#7 \$callback of method PhpAmqpLib\\Channel\\AMQPChannel::basic_consume\(\) expects PhpAmqpLib\\Channel\\callback\|null#'
 		- '#Parameter \#1 \$delivery_tag of method PhpAmqpLib\\Channel\\AMQPChannel::basic_(reject|nack|ack)\(\) expects string, PhpAmqpLib\\Channel\\AMQPChannel given#'
