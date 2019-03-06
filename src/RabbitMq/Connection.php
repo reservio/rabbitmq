@@ -17,51 +17,41 @@ class Connection extends AMQPLazyConnection
 	private $serviceLocator;
 
 	/**
-	 * @var string[][]
+	 * @var string[]
 	 */
-	private $serviceMap = [];
+	private $consumersMap = [];
+
+	/**
+	 * @var string[]
+	 */
+	private $producersMap = [];
 
 
 
-	public function getConsumer(string $name) : BaseConsumer
+	public function getConsumer(string $name) : Consumer
 	{
-		if (!isset($this->serviceMap['consumer'][$name])) {
+		if (!isset($this->consumersMap[$name])) {
 			throw new \InvalidArgumentException("Unknown consumer {$name}");
 		}
 
-		/** @var BaseConsumer $consumer */
-		$consumer = $this->serviceLocator->getService($this->serviceMap['consumer'][$name]);
+		/** @var Consumer $consumer */
+		$consumer = $this->serviceLocator->getService($this->consumersMap[$name]);
 
 		return $consumer;
 	}
 
 
 
-	public function getProducer(string $name) : IProducer
+	public function getProducer(string $name) : Producer
 	{
-		if (!isset($this->serviceMap['producer'][$name])) {
+		if (!isset($this->producersMap[$name])) {
 			throw new \InvalidArgumentException("Unknown producer {$name}");
 		}
 
-		/** @var IProducer $producer */
-		$producer = $this->serviceLocator->getService($this->serviceMap['producer'][$name]);
+		/** @var Producer $producer */
+		$producer = $this->serviceLocator->getService($this->producersMap[$name]);
 
 		return $producer;
-	}
-
-
-
-	/**
-	 * @internal
-	 * @param string[] $producers
-	 * @param string[] $consumers
-	 */
-	public function injectServiceMap(array $producers, array $consumers) : void
-	{
-		$this->serviceMap = [
-			'consumer' => $consumers,
-			'producer' => $producers,
-		];
 	}
 
 
@@ -73,6 +63,28 @@ class Connection extends AMQPLazyConnection
 	public function injectServiceLocator(Container $serviceLocator) : void
 	{
 		$this->serviceLocator = $serviceLocator;
+	}
+
+
+
+	/**
+	 * @internal
+	 * @param string[] $consumers
+	 */
+	public function injectConsumersMap(array $consumers) : void
+	{
+		$this->consumersMap = $consumers;
+	}
+
+
+
+	/**
+	 * @internal
+	 * @param string[] $producers
+	 */
+	public function injectProducersMap(array $producers) : void
+	{
+		$this->producersMap = $producers;
 	}
 
 }

@@ -10,6 +10,31 @@ use PhpAmqpLib\Message\AMQPMessage;
 class Producer extends AmqpMember implements IProducer
 {
 
+	public const DEFAULT_EXCHANGE_OPTIONS = [
+		'passive' => FALSE,
+		'durable' => TRUE,
+		'autoDelete' => FALSE,
+		'internal' => FALSE,
+		'nowait' => FALSE,
+		'arguments' => NULL,
+		'ticket' => NULL,
+	];
+
+	/**
+	 * @var string
+	 */
+	protected $exchangeName;
+
+	/**
+	 * @var string
+	 */
+	protected $exchangeType;
+
+	/**
+	 * @var string
+	 */
+	protected $routingKey = '';
+
 	/**
 	 * @var string
 	 */
@@ -19,6 +44,39 @@ class Producer extends AmqpMember implements IProducer
 	 * @var int
 	 */
 	protected $deliveryMode = AMQPMessage::DELIVERY_MODE_PERSISTENT;
+
+	/**
+	 * @var mixed[]
+	 */
+	protected $exchangeOptions;
+
+	/**
+	 * @var bool
+	 */
+	protected $exchangeDeclared = FALSE;
+
+	/**
+	 * @var bool
+	 */
+	private $autoSetupFabric = TRUE;
+
+
+
+	/**
+	 * @param Connection $connection
+	 * @param string $exchangeName
+	 * @param string $exchangeType
+	 * @param string $routingKey
+	 * @param mixed[] $exchangeOptions
+	 */
+	public function __construct(Connection $connection, string $exchangeName, string $exchangeType, string $routingKey = '', array $exchangeOptions = [])
+	{
+		parent::__construct($connection);
+		$this->exchangeName = $exchangeName;
+		$this->exchangeType = $exchangeType;
+		$this->routingKey = $routingKey;
+		$this->exchangeOptions = $exchangeOptions + self::DEFAULT_EXCHANGE_OPTIONS;
+	}
 
 
 
@@ -36,6 +94,42 @@ class Producer extends AmqpMember implements IProducer
 
 
 
+	public function disableAutoSetupFabric() : void
+	{
+		$this->autoSetupFabric = FALSE;
+	}
+
+
+
+	public function isAutoSetupFabric() : bool
+	{
+		return $this->autoSetupFabric;
+	}
+
+
+
+	public function setupFabric() : void
+	{
+		if ($this->exchangeDeclared) {
+			return;
+		}
+
+		$this->getChannel()->exchange_declare(
+			$this->exchangeName,
+			$this->exchangeType,
+			$this->exchangeOptions['passive'],
+			$this->exchangeOptions['durable'],
+			$this->exchangeOptions['autoDelete'],
+			$this->exchangeOptions['internal'],
+			$this->exchangeOptions['nowait'],
+			$this->exchangeOptions['arguments'],
+			$this->exchangeOptions['ticket']);
+
+		$this->exchangeDeclared = TRUE;
+	}
+
+
+
 	/**
 	 * Publishes the message and merges additional properties with basic properties
 	 *
@@ -45,7 +139,7 @@ class Producer extends AmqpMember implements IProducer
 	 */
 	public function publish(string $msgBody, string $routingKey = '', array $additionalProperties = []) : void
 	{
-		if ($this->autoSetupFabric) {
+		if ($this->isAutoSetupFabric()) {
 			$this->setupFabric();
 		}
 
@@ -54,7 +148,7 @@ class Producer extends AmqpMember implements IProducer
 		}
 
 		$message = new AMQPMessage($msgBody, array_merge($this->getBasicProperties(), $additionalProperties));
-		$this->getChannel()->basic_publish($message, $this->exchangeOptions['name'], $routingKey);
+		$this->getChannel()->basic_publish($message, $this->exchangeName, $routingKey);
 	}
 
 

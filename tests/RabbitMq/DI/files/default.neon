@@ -4,21 +4,14 @@ extensions:
 
 rabbitmq:
 	connection:
-		foo_connection:
-			host: 127.0.0.1
-			port: 5672
-			user: guest
-			password: guest
-			vhost: '/'
-
-		default:
-			user: guest
-			password: guest
-
+		host: 127.0.0.1
+		port: 5672
+		user: guest
+		password: guest
+		vhost: '/'
 
 	producers:
 		foo_producer:
-			connection: foo_connection
 			exchange:
 				name: foo_exchange
 				type: direct
@@ -31,24 +24,14 @@ rabbitmq:
 				ticket: null
 
 		default_producer:
-			exchange:
-				name: default_exchange
-				type: direct
+			exchange: default_exchange
 
 
 	consumers:
 		foo_consumer:
-			connection: foo_connection
-			exchange:
-				name: foo_exchange
-				type: direct
-				passive: true
-				durable: true
-				autoDelete: true
-				internal: true
-				nowait: true
-				arguments: null
-				ticket: null
+			binding:
+				- {exchange: foo_exchange, routingKey: 'android.#.upload'}
+				- {exchange: foo_exchange, routingKey: 'iphone.upload'}
 			queue:
 				name: foo_queue
 				passive: true
@@ -58,27 +41,22 @@ rabbitmq:
 				nowait: true
 				arguments: null
 				ticket: null
-				routing_keys:
-					- 'android.#.upload'
-					- 'iphone.upload'
 			callback: DamejidloTests\RabbitMq\Callback()
 
-		default_consumer < default_producer:
-			queue:
-				name: default_queue
+		default_consumer:
+			queue: default_queue
 			callback: [DamejidloTests\RabbitMq\Callback, staticProcess]
+			binding:
+				- {exchange: default_exchange}
 
 		qos_test_consumer:
-			connection: foo_connection
-			exchange:
-				name: foo_exchange
-				type: direct
+			binding:
+				- {exchange: foo_exchange}
 			queue:
 				name: foo_queue
 			qos:
 				prefetchSize: 1024
 				prefetchCount:  1
-				global: true
 			callback: [@collecting_callback, process]
 
 

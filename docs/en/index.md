@@ -43,9 +43,10 @@ rabbitmq:
 	consumers:
 		uploadPicture:
 			connection: default
-			exchange: {name: 'upload-picture', type: direct}
 			queue: {name: 'upload-picture'}
 			callback: [@MyApp\UploadPictureService, processUpload]
+			binding:
+				- {exchange: 'upload-picture', routingKey: ''}
 ```
 
 Here we configure the connection service and the message endpoints that our application will have. Connection configured like this will be automatically named `default`.
@@ -53,23 +54,6 @@ For the connection, required is only `user` and `password`, others are optional,
 
 In this example your service container will contain the service `rabbitmq.producer.uploadPicture` and `rabbitmq.consumer.uploadPicture`.
 The later expects that there's a service of type `App\UploadPictureService` with method `processUpload`, that accepts the `AMQPMessage`.
-
-You can also define multiple connections, you just have to name them.
-And if you don't specify a connection for the client, the client will not look for the connection named `default`, but for the _first defined_ connection.
-
-```yaml
-rabbitmq:
-	connection:
-		foo: # this connection is defined as first, so it's "the default" for all application clients
-			host: the_other_server.com
-			port: 5672
-			user: 'bar'
-			password: 'secret'
-
-		default:
-			user: 'guest'
-			password: 'secret'
-```
 
 If you need to add optional queue arguments, then your queue options can be something like this:
 
@@ -94,14 +78,14 @@ The argument value must be a list of datatype and value. Valid datatypes are:
 
 Adapt the `arguments` according to your needs.
 
-If you want to bind queue with specific routing keys you can declare it in producer or consumer config:
+If you want to bind queue with specific routing keys you can declare it in consumer config:
 
 ```yaml
 queue:
 	name: "upload-picture"
-	routing_keys:
-	  - 'android.#.upload'
-	  - 'iphone.upload'
+	binding:
+	  - {exchange: 'upload-picture-foo', routingKey: 'android.#.upload'}
+	  - {exchange: 'upload-picture-bar', routingKey: 'iphone.upload'}
 ```
 
 
@@ -171,7 +155,7 @@ You can also configure these in the config
 	producers:
 		uploadPicture:
 			contentType: application/json
-			deliveryMode: 1
+			deliveryMode: PhpAmqpLib\Message\AMQPMessage::DELIVERY_MODE_NON_PERSISTENT
 	...
 ```
 
@@ -198,9 +182,10 @@ Let's review the consumer configuration from above:
 	...
 	consumers:
 		uploadPicture:
-			exchange: {name: 'upload-picture', type: direct}
 			queue: {name: 'upload-picture'}
 			callback: [@MyApp\UploadPictureService, processUpload]
+			binding:
+				- {exchange: 'upload-picture'}
 	...
 ```
 
@@ -209,8 +194,8 @@ When the consumer gets a message from the server it will execute the callback.
 If for testing or debugging purposes you need to specify a different callback, then you can change it there.
 The callback service must return a valid response flag (see the constants on `IConsumer`) and should implement the marker interface `IConsumer` (it's optional).
 
-The remaining options are the `exchange` and the `queue`.
-The `exchange` options should be the same ones as those used for the `producer`.
+The remaining options are the `binding` and the `queue`.
+The `binding` options define the binding of the queue to exchanges, with optional routing key.
 In the `queue` options we will provide a **queue name**. Why?
 
 As we said, messages in AMQP are published to an `exchange`. This doesn't mean the message has reached a `queue`.
@@ -245,7 +230,19 @@ If you want to establish a consumer memory limit, you can do it by using flag `-
 In the following example, this flag adds 256 MB memory limit. Consumer will be stopped five MB before reaching 256MB in order to avoid a PHP Allowed memory size error.
 
 ```bash
-$ php www/index.php rabbitmq:consumer -l 256
+$ php www/index.php rabbitmq:consumer -l 256 uploadPicture
+```
+
+If you need to set a timeout when there are no messages from your queue during a period of time, you can set the idle timeout in seconds:
+
+```bash
+$ php www/index.php rabbitmq:consumer -t 60 uploadPicture
+```
+
+You can also start a process consuming multiple queues.
+
+```bash
+$ php www/index.php rabbitmq:consumer fistConsumerName secondConsumerName thirdConsumerName
 ```
 
 If you want to remove all the messages awaiting in a queue, you can execute this command to purge this queue:
@@ -254,17 +251,6 @@ If you want to remove all the messages awaiting in a queue, you can execute this
 $ php www/index.php rabbitmq:purge --no-confirmation uploadPicture
 ```
 
-#### Idle timeout
-
-If you need to set a timeout when there are no messages from your queue during a period of time, you can set the `idleTimeout` in seconds:
-
-```yaml
-	...
-	consumers:
-		uploadPicture:
-			idleTimeout: 60
-	...
-```
 
 #### Fair dispatching
 
@@ -293,7 +279,7 @@ With RabbitMqBundle, you can configure that qos per consumer like that:
 	...
 	consumers:
 		uploadPicture:
-			qos: {prefetchSize: 0, prefetchCount: 1, global: false}
+			qos: {prefetchSize: 0, prefetchCount: 1}
 	...
 ```
 

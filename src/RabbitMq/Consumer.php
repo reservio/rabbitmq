@@ -3,23 +3,28 @@ declare(strict_types = 1);
 
 namespace Damejidlo\RabbitMq;
 
-use PhpAmqpLib\Exception\AMQPExceptionInterface;
-use PhpAmqpLib\Exception\AMQPRuntimeException;
-use PhpAmqpLib\Exception\AMQPTimeoutException;
 use PhpAmqpLib\Message\AMQPMessage;
 
 
 
 /**
- * @method void onStart(Consumer $self)
  * @method void onConsume(Consumer $self, AMQPMessage $msg)
  * @method void onReject(Consumer $self, AMQPMessage $msg, int $processFlag)
  * @method void onAck(Consumer $self, AMQPMessage $msg)
- * @method void onError(Consumer $self, AMQPExceptionInterface $exception)
- * @method void onTimeout(Consumer $self)
+ * @method void onMessageProcessed(Consumer $self, AMQPMessage $msg)
  */
-class Consumer extends BaseConsumer
+class Consumer extends AmqpMember
 {
+
+	public const DEFAULT_QUEUE_OPTIONS = [
+		'passive' => FALSE,
+		'durable' => TRUE,
+		'exclusive' => FALSE,
+		'autoDelete' => FALSE,
+		'nowait' => FALSE,
+		'arguments' => NULL,
+		'ticket' => NULL,
+	];
 
 	/**
 	 * @var callable[]
@@ -39,102 +44,147 @@ class Consumer extends BaseConsumer
 	/**
 	 * @var callable[]
 	 */
-	public $onStart = [];
+	public $onMessageProcessed = [];
 
 	/**
-	 * @var callable[]
+	 * @var string
 	 */
-	public $onStop = [];
+	protected $queueName;
 
 	/**
-	 * @var callable[]
+	 * @var callable
 	 */
-	public $onTimeout = [];
+	protected $callback;
 
 	/**
-	 * @var callable[]
+	 * @var mixed[]
 	 */
-	public $onError = [];
+	protected $queueOptions;
 
 	/**
-	 * @var int|NULL $memoryLimit
+	 * @var int
 	 */
-	protected $memoryLimit;
+	protected $prefetchSize;
+
+	/**
+	 * @var int
+	 */
+	protected $prefetchCount;
+
+	/**
+	 * @var string
+	 */
+	protected $consumerTag;
+
+	/**
+	 * @var bool
+	 */
+	protected $qosDeclared = FALSE;
+
+	/**
+	 * @var bool
+	 */
+	protected $queueDeclared = FALSE;
+
+	/**
+	 * @var string[][]
+	 */
+	protected $bindings = [];
+
+	/**
+	 * @var bool
+	 */
+	private $autoSetupFabric = TRUE;
 
 
 
-	public function setMemoryLimit(?int $memoryLimit) : void
-	{
-		$this->memoryLimit = $memoryLimit;
+	/**
+	 * @param Connection $connection
+	 * @param string $queueName
+	 * @param callable $callback
+	 * @param mixed[] $queueOptions
+	 * @param int $prefetchSize
+	 * @param int $prefetchCount
+	 * @param string $consumerTag
+	 */
+	public function __construct(
+		Connection $connection,
+		string $queueName,
+		callable $callback,
+		array $queueOptions = [],
+		int $prefetchSize = 0,
+		int $prefetchCount = 0,
+		string $consumerTag = ''
+	) {
+		parent::__construct($connection);
+		$this->queueName = $queueName;
+		$this->callback = $callback;
+		$this->queueOptions = $queueOptions + self::DEFAULT_QUEUE_OPTIONS;
+		$this->prefetchSize = $prefetchSize;
+		$this->prefetchCount = $prefetchCount;
+		$this->consumerTag = $consumerTag === '' ? sprintf("PHPPROCESS_%s_%s_%s", gethostname(), getmypid(), $queueName) : $consumerTag;
 	}
 
 
 
-	public function getMemoryLimit() : ?int
+	public function addBinding(string $exchange, string $routingKey = '') : void
 	{
-		return $this->memoryLimit;
+		$this->bindings[$exchange][] = $routingKey;
 	}
 
 
 
-	public function consume(int $messageAmount) : void
+	public function disableAutoSetupFabric() : void
 	{
-		$this->target = $messageAmount;
-		$this->setupConsumer();
-		$this->onStart($this);
+		$this->autoSetupFabric = FALSE;
+	}
 
-		$previousErrorHandler = set_error_handler(function ($severity, $message, $file, $line, $context) use (&$previousErrorHandler) {
-			if (preg_match('~stream_select\\(\\)~i', $message)) {
-				throw new AMQPRuntimeException($message . ' in ' . $file . ':' . $line, (int) $severity);
-			}
 
-			if (!is_callable($previousErrorHandler)) {
-				return FALSE;
-			}
 
-			return call_user_func_array($previousErrorHandler, func_get_args());
-		});
+	public function isAutoSetupFabric() : bool
+	{
+		return $this->autoSetupFabric;
+	}
 
-		try {
-			while (count($this->getChannel()->callbacks)) {
-				$this->maybeStopConsumer();
 
-				try {
-					$this->getChannel()->wait(NULL, FALSE, $this->getIdleTimeout());
-				} catch (AMQPTimeoutException $exception) {
-					$this->onTimeout($this);
-					// nothing bad happened, right?
-					// intentionally not throwing the exception
-				}
-			}
 
-		} catch (AMQPRuntimeException $exception) {
-			restore_error_handler();
-
-			// sending kill signal to the consumer causes the stream_select to return FALSE
-			// the reader doesn't like the FALSE value, so it throws AMQPRuntimeException
-			$this->maybeStopConsumer();
-			if (!$this->forceStop) {
-				$this->onError($this, $exception);
-				throw $exception;
-			}
-
-		} catch (AMQPExceptionInterface $exception) {
-			restore_error_handler();
-
-			$this->onError($this, $exception);
-			throw $exception;
-
-		} catch (TerminateException $exception) {
-			$this->stopConsuming();
+	public function setupFabric() : void
+	{
+		if ($this->queueDeclared) {
+			return;
 		}
+
+		$this->getChannel()->queue_declare(
+			$this->queueName,
+			$this->queueOptions['passive'],
+			$this->queueOptions['durable'],
+			$this->queueOptions['exclusive'],
+			$this->queueOptions['autoDelete'],
+			$this->queueOptions['nowait'],
+			$this->queueOptions['arguments'],
+			$this->queueOptions['ticket']
+		);
+
+		foreach ($this->bindings as $exchangeName => $routingKeys) {
+			foreach ($routingKeys as $routingKey) {
+				$this->getChannel()->queue_bind($this->queueName, $exchangeName, $routingKey);
+			}
+		}
+		$this->queueDeclared = TRUE;
 	}
 
 
 
-	public function purge() : void
+	public function getQueueName() : string
 	{
-		$this->getChannel()->queue_purge($this->queueOptions['name'], TRUE);
+		return $this->queueName;
+	}
+
+
+
+	public function getConsumerTag() : string
+	{
+		return $this->consumerTag;
 	}
 
 
@@ -154,6 +204,62 @@ class Consumer extends BaseConsumer
 			$this->onReject($this, $message, IConsumer::MSG_REJECT_REQUEUE);
 			throw $exception;
 		}
+	}
+
+
+
+	public function stopConsuming() : void
+	{
+		$this->getChannel()->basic_cancel($this->getConsumerTag());
+	}
+
+
+
+	public function purge() : void
+	{
+		$this->getChannel()->queue_purge($this->queueName, TRUE);
+	}
+
+
+
+	public function setupConsumer() : void
+	{
+		if ($this->isAutoSetupFabric()) {
+			$this->setupFabric();
+		}
+
+		$this->qosDeclare();
+
+		$this->getChannel()->basic_consume(
+			$this->queueName,
+			$this->getConsumerTag(),
+			$this->queueOptions['noLocal'],
+			$this->queueOptions['noAck'],
+			$this->queueOptions['exclusive'],
+			$this->queueOptions['nowait'],
+			function (AMQPMessage $message) : void {
+				$this->processMessage($message);
+			}
+		);
+	}
+
+
+
+	protected function qosDeclare() : void
+	{
+		if ($this->qosDeclared) {
+			return;
+		}
+
+		if ($this->prefetchSize !== 0 || $this->prefetchCount !== 0) {
+			$this->getChannel()->basic_qos(
+				$this->prefetchSize,
+				$this->prefetchCount,
+				FALSE
+			);
+		}
+
+		$this->qosDeclared = TRUE;
 	}
 
 
@@ -184,23 +290,7 @@ class Consumer extends BaseConsumer
 			throw new \InvalidArgumentException("Invalid response flag '$processFlag'.");
 		}
 
-		$this->consumed++;
-		$this->maybeStopConsumer();
-
-		if ($this->isRamAlmostOverloaded()) {
-			$this->stopConsuming();
-		}
-	}
-
-
-
-	protected function isRamAlmostOverloaded() : bool
-	{
-		if ($this->getMemoryLimit() === NULL) {
-			return FALSE;
-		}
-
-		return memory_get_usage(TRUE) >= ($this->getMemoryLimit() * 1024 * 1024);
+		$this->onMessageProcessed($this, $message);
 	}
 
 }

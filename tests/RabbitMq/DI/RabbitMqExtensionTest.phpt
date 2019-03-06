@@ -5,11 +5,11 @@ namespace DamejidloTests\RabbitMq\DI;
 
 use Damejidlo\RabbitMq\Connection;
 use Damejidlo\RabbitMq\Consumer;
+use Damejidlo\RabbitMq\IConsumerRunnerFactory;
 use Damejidlo\RabbitMq\Producer;
 use DamejidloTests\DjTestCase;
 use Nette\Configurator;
 use Nette\DI\Container;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
 use Tester\Assert;
 
 require_once __DIR__ . '/../../bootstrap.php';
@@ -26,13 +26,9 @@ class RabbitMqExtensionTest extends DjTestCase
 	{
 		$container = $this->createContainer();
 
-		// foo was defined first in config
-		Assert::type(AMQPStreamConnection::class, $container->getByType(Connection::class));
-		Assert::same($container->getByType(Connection::class), $container->getService('rabbitmq.foo_connection.connection'));
+		Assert::same($container->getByType(Connection::class), $container->getService('rabbitmq.connection'));
 
-		// only the first defined connection is autowired
-		Assert::type(AMQPStreamConnection::class, $container->getService('rabbitmq.default.connection'));
-		Assert::notSame($container->getByType(Connection::class), $container->getService('rabbitmq.default.connection'));
+		Assert::type(IConsumerRunnerFactory::class, $container->getService('rabbitmq.consumerRunnerFactory'));
 
 		Assert::type(Producer::class, $container->getService('rabbitmq.producer.foo_producer'));
 		Assert::type(Producer::class, $container->getService('rabbitmq.producer.default_producer'));
@@ -40,17 +36,6 @@ class RabbitMqExtensionTest extends DjTestCase
 		Assert::type(Consumer::class, $container->getService('rabbitmq.consumer.foo_consumer'));
 		Assert::type(Consumer::class, $container->getService('rabbitmq.consumer.default_consumer'));
 		Assert::type(Consumer::class, $container->getService('rabbitmq.consumer.qos_test_consumer'));
-	}
-
-
-
-	public function testExtendingConsumerFromProducer() : void
-	{
-		$container = $this->createContainer();
-
-		/** @var Consumer $defaultConsumer */
-		$defaultConsumer = $container->getService('rabbitmq.consumer.default_consumer');
-		Assert::same('default_exchange', $defaultConsumer->getExchangeOptions()['name']);
 	}
 
 

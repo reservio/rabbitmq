@@ -3,8 +3,9 @@ declare(strict_types = 1);
 
 namespace Damejidlo\RabbitMq\Command;
 
-use Damejidlo\RabbitMq\AmqpMember;
+use Damejidlo\RabbitMq\Consumer;
 use Damejidlo\RabbitMq\DI\RabbitMqExtension;
+use Damejidlo\RabbitMq\Producer;
 use Nette\DI\Container;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -49,7 +50,7 @@ class SetupFabricCommand extends Command
 
 		foreach (self::SERVICE_TAGS as $tag) {
 			foreach ($this->container->findByTag($tag) as $serviceId => $meta) {
-				/** @var AmqpMember $service */
+				/** @var Consumer|Producer $service */
 				$service = $this->container->getService($serviceId);
 				$service->setupFabric();
 			}
