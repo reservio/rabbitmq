@@ -15,6 +15,3 @@ parameters:
 
 	excludes_analyse:
 		- %currentWorkingDirectory%/tests/tmp/*
-
-	ignoreErrors:
-		- '#Array \(array<PhpAmqpLib\\Channel\\AMQPChannel>\) does not accept int#' # false positive

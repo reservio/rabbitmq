@@ -6,6 +6,7 @@ namespace DamejidloTests\RabbitMq;
 use Damejidlo\RabbitMq\Connection;
 use Damejidlo\RabbitMq\Consumer;
 use DamejidloTests\DjTestCase;
+use PhpAmqpLib\Exception\AMQPIOException;
 use Tester\Assert;
 
 require_once __DIR__ . '/../bootstrap.php';
@@ -25,7 +26,7 @@ class BaseAmqpTest extends DjTestCase
 
 		Assert::exception(function () use ($consumer) : void {
 			$consumer->getChannel();
-		}, \ErrorException::class, 'stream_socket_client(): unable to connect to tcp://localhost:123 (%a%)');
+		}, AMQPIOException::class, 'stream_socket_client(): unable to connect to tcp://localhost:123 (%a%)');
 	}
 
 }

@@ -146,7 +146,7 @@ class ConsumerRunner extends AmqpMember
 		});
 
 		try {
-			while (count($this->getChannel()->callbacks)) {
+			while ($this->getChannel()->is_consuming()) {
 				$this->maybeStopConsumer();
 
 				try {
