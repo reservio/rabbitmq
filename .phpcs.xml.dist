@@ -12,6 +12,33 @@
     <rule ref="DameJidloCodingStandard">
     </rule>
 
-    <!-- special settings for tests and bootstrap -->
-    <exclude-pattern>*/tests/tmp/*</exclude-pattern>
+    <rule ref="SlevomatCodingStandard.Namespaces.UnusedUses">
+        <properties>
+            <property name="ignoredAnnotationNames" type="array">
+                <element value="@testCase"/>
+                <element value="@dataProvider"/>
+            </property>
+        </properties>
+    </rule>
+    <rule ref="SlevomatCodingStandard.Files.TypeNameMatchesFileName">
+        <exclude-pattern>*/exceptions.php</exclude-pattern>
+        <properties>
+            <property name="rootNamespaces" type="array">
+                <element key="src" value="Damejidlo"/>
+
+                <element key="tests" value="DamejidloTests"/>
+            </property>
+            <property name="extensions" type="array">
+                <element value="php"/>
+                <element value="phpt"/>
+            </property>
+        </properties>
+    </rule>
+
+    <rule ref="PSR1.Files.SideEffects">
+        <exclude-pattern>*.phpt</exclude-pattern>
+        <exclude-pattern>*/bootstrap.php</exclude-pattern>
+    </rule>
+
+    <exclude-pattern>tests/tmp/*</exclude-pattern>
 </ruleset>
