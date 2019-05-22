@@ -42,6 +42,8 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 		'user' => NULL,
 		'password' => NULL,
 		'vhost' => '/',
+		'heartbeat' => 60,
+		'read_write_timeout' => 130.0,
 	];
 
 	/**
@@ -163,13 +165,7 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 
 		$builder->addDefinition($this->prefix('connection'))
 			->setClass(Connection::class)
-			->setArguments([
-				$config['host'],
-				$config['port'],
-				$config['user'],
-				$config['password'],
-				$config['vhost'],
-			])
+			->setArguments($config)
 			->addSetup('injectServiceLocator');
 	}
 

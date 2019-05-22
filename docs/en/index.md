@@ -34,6 +34,8 @@ rabbitmq:
 		user: 'guest'
 		password: 'guest'
 		vhost: '/'
+		heartbeat: 60
+		read_write_timeout: 130.0
 
 	producers:
 		uploadPicture:
