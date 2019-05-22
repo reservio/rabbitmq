@@ -43,8 +43,8 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 		'user' => NULL,
 		'password' => NULL,
 		'vhost' => '/',
-		'heartbeat' => 60,
-		'read_write_timeout' => 130.0,
+		'heartbeat' => 0,
+		'read_write_timeout' => 10.0,
 	];
 
 	/**

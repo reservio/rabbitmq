@@ -34,8 +34,8 @@ rabbitmq:
 		user: 'guest'
 		password: 'guest'
 		vhost: '/'
-		heartbeat: 60
-		read_write_timeout: 130.0
+		heartbeat: 0 # heartbeat is disabled by default
+		read_write_timeout: 10.0
 
 	producers:
 		uploadPicture:
