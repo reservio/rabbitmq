@@ -173,6 +173,19 @@ If you need to use a custom class for a producer (which should inherit from `Dam
 
 The next piece of the puzzle is to have a consumer that will take the message out of the queue and process it accordingly.
 
+#### Publisher confirms
+
+To ensure reliable message delivery [publisher confirms](https://www.rabbitmq.com/confirms.html#publisher-confirms) are by default enabled in production mode. If you're uncomfortable with performance hit this brings, you can disable them in your configuration:
+
+```yaml
+rabbitmq:
+	publisherConfirms: FALSE # enable/disable publisher confirms globally for all producers
+	producers:
+		uploadPicture:
+			publisherConfirms: FALSE # enable/disable publisher confirms for this producer
+			...
+```
+
 
 ### Consumers
 

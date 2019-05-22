@@ -31,6 +31,7 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 		'producers' => [],
 		'consumers' => [],
 		'autoSetupFabric' => NULL, // depends on debugMode parameter
+		'publisherConfirms' => NULL, // depends on debugMode parameter
 	];
 
 	/**
@@ -57,6 +58,7 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 		'deliveryMode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
 		'routingKey' => '',
 		'autoSetupFabric' => NULL, // inherits from `rabbitmq: autoSetupFabric:`
+		'publisherConfirms' => NULL, // inherits from `rabbitmq: publisherConfirms:`
 	];
 
 	/**
@@ -123,6 +125,7 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 	public function __construct(bool $debugMode = FALSE)
 	{
 		$this->defaults['autoSetupFabric'] = $this->defaults['autoSetupFabric'] ?? $debugMode;
+		$this->defaults['publisherConfirms'] = $this->defaults['publisherConfirms'] ?? ! $debugMode;
 	}
 
 
@@ -180,6 +183,7 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 
 		$producerDefaults = $this->producerDefaults;
 		$producerDefaults['autoSetupFabric'] = $producerDefaults['autoSetupFabric'] ?? $this->config['autoSetupFabric'];
+		$producerDefaults['publisherConfirms'] = $producerDefaults['publisherConfirms'] ?? $this->config['publisherConfirms'];
 
 		$builder = $this->getContainerBuilder();
 		foreach ($producers as $name => $config) {
@@ -215,6 +219,10 @@ class RabbitMqExtension extends Nette\DI\CompilerExtension
 
 			if ($config['autoSetupFabric'] === FALSE) {
 				$producer->addSetup('disableAutoSetupFabric');
+			}
+
+			if ($config['publisherConfirms'] === TRUE) {
+				$producer->addSetup('enablePublisherConfirms');
 			}
 
 			$producersMap[$name] = $serviceName;
