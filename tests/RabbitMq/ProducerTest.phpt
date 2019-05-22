@@ -35,13 +35,14 @@ class ProducerTest extends DjTestCase
 		$channel->shouldReceive('basic_publish')
 			->once()
 			->withArgs(
-				function (AMQPMessage $message, string $exchangeName, string $routingKey) : bool {
+				function (AMQPMessage $message, string $exchangeName, string $routingKey, bool $mandatory) : bool {
 					Assert::same('body', $message->getBody());
 					Assert::same('bar', $message->get('message_id'));
 					Assert::same(AMQPMessage::DELIVERY_MODE_PERSISTENT, $message->get('delivery_mode'));
 					Assert::same('text/plain', $message->get('content_type'));
 					Assert::same(self::EXCHANGE_NAME, $exchangeName);
 					Assert::same('', $routingKey);
+					Assert::same(FALSE, $mandatory);
 
 					return TRUE;
 				}
@@ -52,6 +53,30 @@ class ProducerTest extends DjTestCase
 
 		Assert::noError(function () use ($producer) : void {
 			$producer->publish('body', '', ['message_id' => 'bar']);
+		});
+	}
+
+
+
+	public function testPublishWithPublisherConfirms() : void
+	{
+		$channel = $this->mockChannel();
+		$connection = $this->mockConnection($channel);
+
+		$channel->shouldReceive('set_nack_handler')->once();
+		$channel->shouldReceive('set_return_listener')->once();
+		$channel->shouldReceive('confirm_select')->once();
+
+		$channel->shouldReceive('basic_publish')
+			->once()
+			->withArgs([AMQPMessage::class, self::EXCHANGE_NAME, '', TRUE]);
+
+		$producer = new Producer($connection, self::EXCHANGE_NAME, self::EXCHANGE_TYPE);
+		$producer->disableAutoSetupFabric();
+		$producer->enablePublisherConfirms();
+
+		Assert::noError(function () use ($producer) : void {
+			$producer->publish('body');
 		});
 	}
 
@@ -83,7 +108,7 @@ class ProducerTest extends DjTestCase
 
 		$channel->shouldReceive('basic_publish')
 			->once()
-			->withArgs([AMQPMessage::class, self::EXCHANGE_NAME, self::DEFAULT_ROUTING_KEY]);
+			->withArgs([AMQPMessage::class, self::EXCHANGE_NAME, self::DEFAULT_ROUTING_KEY, FALSE]);
 
 		$producer = new Producer($connection, self::EXCHANGE_NAME, self::EXCHANGE_TYPE, self::DEFAULT_ROUTING_KEY);
 		$producer->disableAutoSetupFabric();
@@ -102,7 +127,7 @@ class ProducerTest extends DjTestCase
 
 		$channel->shouldReceive('basic_publish')
 			->once()
-			->withArgs([AMQPMessage::class, self::EXCHANGE_NAME, 'override']);
+			->withArgs([AMQPMessage::class, self::EXCHANGE_NAME, 'override', FALSE]);
 
 		$producer = new Producer($connection, self::EXCHANGE_NAME, self::EXCHANGE_TYPE, self::DEFAULT_ROUTING_KEY);
 		$producer->disableAutoSetupFabric();
@@ -135,7 +160,7 @@ class ProducerTest extends DjTestCase
 	private function mockChannel() : AMQPChannel
 	{
 		$mock = \Mockery::mock(AMQPChannel::class);
-		$mock->makePartial();
+		$mock->shouldIgnoreMissing();
 
 		return $mock;
 	}

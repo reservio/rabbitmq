@@ -60,6 +60,16 @@ class Producer extends AmqpMember implements IProducer
 	 */
 	private $autoSetupFabric = TRUE;
 
+	/**
+	 * @var bool
+	 */
+	private $publisherConfirmsEnabled = FALSE;
+
+	/**
+	 * @var bool
+	 */
+	private $publisherConfirmsConfigured = FALSE;
+
 
 
 	/**
@@ -130,12 +140,56 @@ class Producer extends AmqpMember implements IProducer
 
 
 
+	public function enablePublisherConfirms() : void
+	{
+		$this->publisherConfirmsEnabled = TRUE;
+	}
+
+
+
+	public function isPublisherConfirmsEnabled() : bool
+	{
+		return $this->publisherConfirmsEnabled;
+	}
+
+
+
+	public function configurePublisherConfirms() : void
+	{
+		if ($this->publisherConfirmsConfigured) {
+			return;
+		}
+
+		$channel = $this->getChannel();
+
+		$channel->set_nack_handler(
+			function (AMQPMessage $message) : void {
+				throw FailedToPublishMessageException::withExchange($this->exchangeName);
+			}
+		);
+
+		$channel->set_return_listener(
+			function (int $replyCode, string $replyText, string $exchange, string $routingKey, AMQPMessage $message) : void {
+				if ($replyText === 'NO_ROUTE') {
+					throw UnroutableMessageException::withExchangeAndRoutingKey($exchange, $routingKey);
+				}
+			}
+		);
+
+		$channel->confirm_select();
+
+		$this->publisherConfirmsConfigured = TRUE;
+	}
+
+
+
 	/**
 	 * Publishes the message and merges additional properties with basic properties
 	 *
 	 * @param string $msgBody
 	 * @param string $routingKey if not provided, used default routingKey from configuration of this producer
 	 * @param mixed[] $additionalProperties
+	 * @throws FailedToPublishMessageException
 	 */
 	public function publish(string $msgBody, string $routingKey = '', array $additionalProperties = []) : void
 	{
@@ -143,12 +197,22 @@ class Producer extends AmqpMember implements IProducer
 			$this->setupFabric();
 		}
 
+		$isPublisherConfirmsEnabled = $this->isPublisherConfirmsEnabled();
+		if ($isPublisherConfirmsEnabled) {
+			$this->configurePublisherConfirms();
+		}
+
 		if ($routingKey === '') {
 			$routingKey = $this->routingKey;
 		}
 
+		$channel = $this->getChannel();
 		$message = new AMQPMessage($msgBody, array_merge($this->getBasicProperties(), $additionalProperties));
-		$this->getChannel()->basic_publish($message, $this->exchangeName, $routingKey);
+		$channel->basic_publish($message, $this->exchangeName, $routingKey, $isPublisherConfirmsEnabled);
+
+		if ($isPublisherConfirmsEnabled) {
+			$channel->wait_for_pending_acks_returns();
+		}
 	}
 
 
